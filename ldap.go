@@ -16,6 +16,32 @@ type LDAPConfig struct {
 	BaseDN   string
 }
 
+var (
+	parseStrings = []string{
+		"Monday, January 02, 2006",
+		"Monday, January _2, 2006",
+		"Monday, January 2, 2006",
+		"January 02, 2006",
+		"January _2, 2006",
+		"January 2, 2006",
+		"January 02",
+		"January _2",
+		"January 2",
+		"Jan 02, 2006",
+		"Jan _2, 2006",
+		"Jan 2, 2006",
+		"Jan 02",
+		"Jan _2",
+		"Jan 2",
+		"01/02/2006",
+		"1/2/2006",
+		"01/02/06",
+		"1/2/06",
+		"01/02",
+		"1/2",
+	}
+)
+
 func GetBirthdays(config LDAPConfig) ([]Anniversary, error) {
 	conn, err := ldap.Dial("tcp", fmt.Sprintf("%s:%s", config.Host, config.Port))
 	if err != nil {
@@ -42,18 +68,21 @@ func GetBirthdays(config LDAPConfig) ([]Anniversary, error) {
 	var birthdays []Anniversary
 
 	for _, e := range s.Entries {
-		birthdate := time.Date(0, time.Month(0), 0, 0, 0, 0, 0, time.Local)
+		birthdate := time.Time{}
 		name := e.GetAttributeValue("displayName")
 		bday := e.GetAttributeValue("birthDate")
 		if name == "" {
 			name = e.GetAttributeValue("cn")
 		}
 		if bday != "" {
-			if birthdate, err = time.ParseInLocation("Monday, January 02, 2006", bday, time.Local); err != nil {
-				if birthdate, err = time.ParseInLocation("January 02", bday, time.Local); err != nil {
-					fmt.Printf("error parsing %q: %v\n", bday, err)
-					continue
+			for _, parseString := range parseStrings {
+				if birthdate, err = time.ParseInLocation(parseString, bday, time.Local); err == nil {
+					break
 				}
+			}
+			if err != nil {
+				fmt.Printf("error parsing %q: %v\n", bday, err)
+				birthdate = time.Time{}
 			}
 		}
 		birthdays = append(birthdays, Anniversary{Name: name, Event: birthdate})
