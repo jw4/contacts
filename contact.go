@@ -21,9 +21,11 @@ type Contact struct {
 func SearchRequest(base string) *ldap.SearchRequest {
 	return ldap.NewSearchRequest(
 		fmt.Sprintf("ou=contacts,%s", base),
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
+		ldap.ScopeWholeSubtree,
+		ldap.NeverDerefAliases,
+		0, 0, false,
 		"(&(objectClass=contact))",
-		[]string{"cn", "displayName", "birthDate", "givenName", "sn", "mail"}, nil)
+		attributes, nil)
 }
 
 func FromEntry(entry *ldap.Entry) Contact {
@@ -94,6 +96,12 @@ func (c Contact) BirthYear() int {
 	return c.Birthday.Year()
 }
 
+type ByName []Contact
+
+func (b ByName) Len() int           { return len(b) }
+func (b ByName) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b ByName) Less(i, j int) bool { return compareName(b[i], b[j]) }
+
 type ByBirthday []Contact
 
 func (b ByBirthday) Len() int           { return len(b) }
@@ -115,29 +123,51 @@ func compareBirthday(lhs, rhs Contact) bool {
 
 func compareDisplay(lhs, rhs Contact) bool { return lhs.Name < rhs.Name }
 
-var dateFormats = []string{
-	"Monday, January 02, 2006",
-	"Monday, January _2, 2006",
-	"Monday, January 2, 2006",
-	"January 02, 2006",
-	"January _2, 2006",
-	"January 2, 2006",
-	"January 02",
-	"January _2",
-	"January 2",
-	"Jan 02, 2006",
-	"Jan _2, 2006",
-	"Jan 2, 2006",
-	"Jan 02",
-	"Jan _2",
-	"Jan 2",
-	"01/02/2006",
-	"1/2/2006",
-	"01/02/06",
-	"1/2/06",
-	"01/02",
-	"1/2",
+func compareName(lhs, rhs Contact) bool {
+	if lhs.Last == rhs.Last {
+		if lhs.First == rhs.First {
+			return compareDisplay(lhs, rhs)
+		}
+		return lhs.First < rhs.First
+	}
+	return lhs.Last < rhs.Last
 }
+
+var (
+	attributes = []string{
+		"cn",
+		"displayName",
+		"birthDate",
+		"givenName",
+		"sn",
+		"mail",
+		"telephoneNumber",
+		"label",
+	}
+	dateFormats = []string{
+		"Monday, January 02, 2006",
+		"Monday, January _2, 2006",
+		"Monday, January 2, 2006",
+		"January 02, 2006",
+		"January _2, 2006",
+		"January 2, 2006",
+		"January 02",
+		"January _2",
+		"January 2",
+		"Jan 02, 2006",
+		"Jan _2, 2006",
+		"Jan 2, 2006",
+		"Jan 02",
+		"Jan _2",
+		"Jan 2",
+		"01/02/2006",
+		"1/2/2006",
+		"01/02/06",
+		"1/2/06",
+		"01/02",
+		"1/2",
+	}
+)
 
 func parseDate(given string) time.Time {
 	for _, dateFormat := range dateFormats {

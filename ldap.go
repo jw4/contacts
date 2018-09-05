@@ -24,8 +24,6 @@ func GetContacts(config LDAPConfig) ([]Contact, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	sort.Sort(ByBirthday(contacts))
 	return contacts, nil
 }
 
@@ -48,7 +46,7 @@ func GetContact(config LDAPConfig, dn string) (Contact, error) {
 	case 0:
 		return Contact{}, errors.New("err not found")
 	default:
-		sort.Sort(ByBirthday(contacts))
+		sort.Sort(ByName(contacts))
 		return contacts[0], nil
 	}
 }

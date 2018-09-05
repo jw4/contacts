@@ -21,10 +21,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	sort.Sort(contacts.ByBirthday(records))
+	sort.Sort(contacts.ByName(records))
 	for _, p := range records {
-		if p.BirthDate() != "" {
-			fmt.Printf("%-13s %-30s %s\n", p.BirthDate(), p.Name, p.Age())
-		}
+		fmt.Printf("%30s %-40s %-20s %v\n", p.Name, p.Email, p.Phone, p.Labels)
 	}
 }
