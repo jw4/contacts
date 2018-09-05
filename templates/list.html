@@ -1,19 +1,19 @@
-<html>
-
-<body>
-    <h1>Contacts</h1>
-    {{ $records := . }} {{ range months }}
-    <section class="birthdays {{ . }}">
-        <h2>{{ . }}</h2>
-        <ul>{{range $month, $contact := index $records .}}
-            <li><span class=day>{{.BirthDayOfMonth}}</span> <a href="/detail/?dn={{.ID}}"><span class=name>{{.Name}}</span></a>{{if .BirthDate}} <span class=birthday title="{{.Age}}">{{.BirthDate}}</span>{{end}}{{end}}
-        </ul>
-    </section>
-    {{ end }}
-    <section class="no-birthdays">
-        <h2>Birthday unknown</h2>
-        <ul>{{ range $month, $contact := index $records ""}}
-            <li><a href="/detail/?{{.ID}}"><span class=name>{{.Name}}</span></a>{{end}}
-        </ul>
-    </section>
-</body>
+{{ template "header" $ }}
+<h1>Contacts</h1>
+<table class="contacts">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Phone</th>
+            <th>Email</th>
+        </tr>
+    </thead>
+    <tbody>{{ range .Contacts }}
+        <tr>
+            <td><a href="/contacts/detail/?dn={{.ID}}"><span class=name>{{.Name}}</span></a></td>
+            <td><a href="tel:{{ .Phone }}">{{ .Phone }}</a></td>
+            <td><a href="mailto:{{ .Email }}">{{ .Email }}</a></td>
+        </tr>{{ end }}
+    </tbody>
+</table>
+{{ template "footer" $ }}

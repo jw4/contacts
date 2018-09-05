@@ -1,0 +1,21 @@
+{{ template "header" $ }}
+<h1>Birthdays</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Day</th>
+            <th>Name</th>
+            <th>Birthday</th>
+        </tr>
+    </thead>
+    {{ range months }}{{ if gt (len (index $.ByMonth .)) 0 }}
+    <tbody class="birthdays {{ . }}">{{range $month, $contact := index $.ByMonth .}}
+        <tr>
+            <td><span class=day>{{.BirthDayOfMonth}}</span></td>
+            <td> <a href="/contacts/detail/?dn={{.ID}}"><span class=name>{{.Name}}</span></a></td>
+            <td>{{if .BirthDate}}<span class=birthday title="{{.Age}} old">{{.BirthDate}}</span>{{end}}</td>
+        </tr> {{end}}
+    </tbody>
+    {{ end }}{{ end }}
+</table>
+{{ template "footer" $ }}

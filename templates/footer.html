@@ -1,0 +1,16 @@
+{{ define "footer" }}
+
+<section class=labels>
+    {{ range .Labels }}<span class=label><a href="/contacts/list/?label={{ . }}">{{ . }}</a></span> {{end}}
+</section>
+
+<nav>
+    <ul>
+        <li> <a href="{{ contactsLink $.Labels }}">Contacts</a></li>
+        <li> <a href="{{ birthdaysLink $.Labels }}">Birthdays</a></li>
+    </ul>
+</nav>
+
+</body>
+
+</html> {{ end }}

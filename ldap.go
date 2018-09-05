@@ -16,9 +16,10 @@ type LDAPConfig struct {
 	BaseDN   string
 }
 
-func GetContacts(config LDAPConfig) ([]Contact, error) {
+func GetContacts(config LDAPConfig, labels []string) ([]Contact, error) {
+	request := SearchRequest(config.BaseDN, labels)
 	var contacts []Contact
-	err := getEntries(config, SearchRequest(config.BaseDN), func(e *ldap.Entry) {
+	err := getEntries(config, request, func(e *ldap.Entry) {
 		contacts = append(contacts, FromEntry(e))
 	})
 	if err != nil {
@@ -28,7 +29,7 @@ func GetContacts(config LDAPConfig) ([]Contact, error) {
 }
 
 func GetContact(config LDAPConfig, dn string) (Contact, error) {
-	request := SearchRequest(config.BaseDN)
+	request := SearchRequest(config.BaseDN, nil)
 	request.BaseDN = dn
 	request.Scope = ldap.ScopeBaseObject
 

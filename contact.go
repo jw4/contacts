@@ -2,6 +2,7 @@ package contacts
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	ldap "gopkg.in/ldap.v2"
@@ -18,13 +19,17 @@ type Contact struct {
 	Labels   []string
 }
 
-func SearchRequest(base string) *ldap.SearchRequest {
+func SearchRequest(base string, labels []string) *ldap.SearchRequest {
+	var b strings.Builder
+	for _, label := range labels {
+		fmt.Fprintf(&b, "(label=%s)", label)
+	}
 	return ldap.NewSearchRequest(
 		fmt.Sprintf("ou=contacts,%s", base),
 		ldap.ScopeWholeSubtree,
 		ldap.NeverDerefAliases,
 		0, 0, false,
-		"(&(objectClass=contact))",
+		fmt.Sprintf("(&(objectClass=contact)%s)", b.String()),
 		attributes, nil)
 }
 

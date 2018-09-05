@@ -1,17 +1,28 @@
-<html>
-
-<body>
-    <h1>{{ .Name }}</h1>
-    <section>
-        <span class=first>{{ .First }}</span><br>
-        <span class=last>{{ .Last }}</span><br>
-        <span class=birthdate>{{ .BirthDate }}</span><br>
-        <span class=email>{{ .Email }}</span><br>
-        <span class=phone>{{ .Phone }}</span><br> {{ range .Labels }}<span class=label>{{ . }}</span> {{end}}
-    </section>
-    <footer>
-        <a href="/">Back to list</a>
-    </footer>
-</body>
-
-</html>
+{{ template "header" $ }}{{ with index $.Contacts 0 }}
+<h1>{{ .Name }}</h1>
+<table title="ID: {{ .ID }}">
+    <tr>
+        <td>First</td>
+        <td>{{ .First }}</td>
+    </tr>
+    <tr>
+        <td>Last</td>
+        <td>{{ .Last }}</td>
+    </tr>
+    <tr>
+        <td>Email</td>
+        <td><a href="mailto:{{ .Email }}">{{ .Email }}</a></td>
+    </tr>
+    <tr>
+        <td>Phone</td>
+        <td><a href="tel:{{ .Phone }}">{{ .Phone }}</a></td>
+    </tr>
+    <tr>
+        <td>Birthdate</td>
+        <td>{{ .BirthDate }}</td>
+    </tr>
+    <tr>
+        <td>Labels</td>
+        <td>{{ range .Labels }}<span class=label><a href="/contacts/list/?label={{ . }}">{{ . }}</a></span> {{end}}</td>
+    </tr>
+</table>{{ end }} {{ template "footer" $ }}

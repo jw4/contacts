@@ -1,0 +1,111 @@
+html,
+body,
+section {
+    margin: 0;
+    padding: 0;
+    color: black;
+}
+
+a {
+    color: black;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+table {
+    margin: 2em;
+    padding: 2em;
+}
+
+th {
+    text-align: left;
+}
+
+td:first-child {
+    text-align: right;
+    font-weight: bold;
+    padding-right: 1em;
+}
+
+tbody.birthdays::before {
+    content: 'Month';
+    display: block;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 3em;
+    text-decoration: underline;
+}
+
+tbody.birthdays.January::before {
+    content: 'January';
+}
+
+tbody.birthdays.February::before {
+    content: 'February';
+}
+
+tbody.birthdays.March::before {
+    content: 'March';
+}
+
+tbody.birthdays.April::before {
+    content: 'April';
+}
+
+tbody.birthdays.May::before {
+    content: 'May';
+}
+
+tbody.birthdays.June::before {
+    content: 'June';
+}
+
+tbody.birthdays.July::before {
+    content: 'July';
+}
+
+tbody.birthdays.August::before {
+    content: 'August';
+}
+
+tbody.birthdays.September::before {
+    content: 'September';
+}
+
+tbody.birthdays.October::before {
+    content: 'October';
+}
+
+tbody.birthdays.November::before {
+    content: 'November';
+}
+
+tbody.birthdays.December::before {
+    content: 'December';
+}
+
+tbody.birthdays {
+    margin: 2em;
+    padding: 2em;
+}
+
+tbody.birthdays .day {
+    font-weight: bold;
+    text-align: right;
+}
+
+tbody.birthdays .birthday {
+    font-weight: lighter;
+    color: gray;
+}
+
+span.label {
+    background: gray;
+    color: white;
+    border-radius: 12px;
+    padding: 4px 10px;
+    margin: 0 4px 0 0;
+}
