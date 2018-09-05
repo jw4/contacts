@@ -1,8 +1,12 @@
 {{ define "header" }}
 <html>
 
-<head>{{ with $.Title }}
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="theme-color" content="#000000"> {{ with $.Title }}
     <title>{{ . }}</title>{{end}}
+    <link rel="shortcut icon" href="/favicon.ico">
     <link rel="stylesheet" href="/styles.css">
     <script type="text/javascript" src="https://underscorejs.org/underscore-min.js"></script>
     <script type="text/javascript" src="/main.js"></script>
