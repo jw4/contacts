@@ -17,7 +17,7 @@ func main() {
 		Password: os.Getenv("LDAP_PASS"),
 		BaseDN:   os.Getenv("LDAP_BASE"),
 	}
-	records, err := contacts.GetContacts(config)
+	records, err := contacts.GetContacts(config, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
