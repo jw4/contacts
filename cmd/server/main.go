@@ -70,7 +70,7 @@ func (s *server) showDetail(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 
-	err = s.tmpl.ExecuteTemplate(w, "detail.html", viewData{Labels: nil, Contacts: []contacts.Contact{contact}})
+	err = s.tmpl.ExecuteTemplate(w, "detail.html", viewData{Title: fmt.Sprintf("Detail :: %s", contact.Name), Labels: nil, Contacts: []contacts.Contact{contact}})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,7 +84,7 @@ func (s *server) showList(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	sort.Sort(contacts.ByName(records))
-	err = s.tmpl.ExecuteTemplate(w, "list.html", viewData{Labels: labels, Contacts: records})
+	err = s.tmpl.ExecuteTemplate(w, "list.html", viewData{Title: fmt.Sprintf("Contacts :: %s", strings.Join(labels, ", ")), Labels: labels, Contacts: records})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -102,13 +102,14 @@ func (s *server) showBirthdays(w http.ResponseWriter, r *http.Request) {
 	for _, contact := range records {
 		ordered[contact.BirthMonth()] = append(ordered[contact.BirthMonth()], contact)
 	}
-	err = s.tmpl.ExecuteTemplate(w, "birthdays.html", viewData{Labels: labels, Contacts: records, ByMonth: ordered})
+	err = s.tmpl.ExecuteTemplate(w, "birthdays.html", viewData{Title: fmt.Sprintf("Birthdays :: %s", strings.Join(labels, ", ")), Labels: labels, Contacts: records, ByMonth: ordered})
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 type viewData struct {
+	Title    string
 	Labels   []string
 	Contacts []contacts.Contact
 	ByMonth  map[string][]contacts.Contact

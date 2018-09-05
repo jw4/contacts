@@ -6,6 +6,10 @@ section {
     color: black;
 }
 
+body {
+    padding: 2em;
+}
+
 a {
     color: black;
     text-decoration: none;
@@ -108,4 +112,8 @@ span.label {
     border-radius: 12px;
     padding: 4px 10px;
     margin: 0 4px 0 0;
+}
+
+span.label a {
+    color: white;
 }

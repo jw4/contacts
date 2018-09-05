@@ -1,5 +1,5 @@
 {{ template "header" $ }}{{ with index $.Contacts 0 }}
-<h1>{{ .Name }}</h1>
+<h1>{{ $.Title }}</h1>
 <table title="ID: {{ .ID }}">
     <tr>
         <td>First</td>
