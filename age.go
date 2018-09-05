@@ -31,6 +31,21 @@ func (a Age) String() string { return join([]string{a.Year(), a.Month(), a.Day()
 func (a Age) Full() string {
 	return join([]string{a.Year(), a.Month(), a.Day(), a.Hour(), a.Minute(), a.Second()})
 }
+func (a Age) Short() string {
+	for _, fn := range []func() string{
+		a.Year,
+		a.Month,
+		a.Day,
+		a.Hour,
+		a.Minute,
+		a.Second,
+	} {
+		if short := fn(); short != "" {
+			return short
+		}
+	}
+	return ""
+}
 
 // diff computes elapsed time beyond hours.
 // See https://stackoverflow.com/a/36531443/102371 for credit.

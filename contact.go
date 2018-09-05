@@ -50,13 +50,10 @@ func (c Contact) AgeOn(date time.Time) string {
 		return ""
 	}
 	if event.Year() == 0 {
-		event = time.Date(date.Year(), event.Month(), event.Day(), event.Hour(), event.Minute(), event.Second(), event.Nanosecond(), event.Location())
-		if event.Before(date) {
-			event = time.Date(event.Year()+1, event.Month(), event.Day(), event.Hour(), event.Minute(), event.Second(), event.Nanosecond(), event.Location())
-		}
+		return ""
 	}
 	age := NewAge(event, date)
-	return age.String()
+	return age.Short()
 }
 
 func (c Contact) BirthDate() string {
@@ -64,9 +61,9 @@ func (c Contact) BirthDate() string {
 		return ""
 	}
 	if c.Birthday.Year() > 0 {
-		return c.Birthday.Format("Mon, Jan 2, 2006")
+		return c.Birthday.Format("Jan _2, 2006")
 	}
-	return c.Birthday.Format("Jan 2")
+	return c.Birthday.Format("Jan _2")
 }
 
 func (c Contact) BirthDayOfWeek() string {
