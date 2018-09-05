@@ -20,11 +20,11 @@ func main() {
 		Password: os.Getenv("LDAP_PASS"),
 		BaseDN:   os.Getenv("LDAP_BASE"),
 	}
-	records, err := contacts.GetBirthdays(config)
+	records, err := contacts.GetContacts(config)
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, p := range records {
-		fmt.Printf("%s\n", p)
+		fmt.Printf("%30s %-30s %s\n", p.BirthDate(), p.Name, p.Age())
 	}
 }

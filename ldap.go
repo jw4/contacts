@@ -1,9 +1,9 @@
 package contacts
 
 import (
+	"errors"
 	"fmt"
 	"sort"
-	"time"
 
 	ldap "gopkg.in/ldap.v2"
 )
@@ -16,79 +16,62 @@ type LDAPConfig struct {
 	BaseDN   string
 }
 
-var (
-	parseStrings = []string{
-		"Monday, January 02, 2006",
-		"Monday, January _2, 2006",
-		"Monday, January 2, 2006",
-		"January 02, 2006",
-		"January _2, 2006",
-		"January 2, 2006",
-		"January 02",
-		"January _2",
-		"January 2",
-		"Jan 02, 2006",
-		"Jan _2, 2006",
-		"Jan 2, 2006",
-		"Jan 02",
-		"Jan _2",
-		"Jan 2",
-		"01/02/2006",
-		"1/2/2006",
-		"01/02/06",
-		"1/2/06",
-		"01/02",
-		"1/2",
-	}
-)
-
-func GetBirthdays(config LDAPConfig) ([]Anniversary, error) {
-	conn, err := ldap.Dial("tcp", fmt.Sprintf("%s:%s", config.Host, config.Port))
+func GetContacts(config LDAPConfig) ([]Contact, error) {
+	var contacts []Contact
+	err := getEntries(config, SearchRequest(config.BaseDN), func(e *ldap.Entry) {
+		contacts = append(contacts, FromEntry(e))
+	})
 	if err != nil {
 		return nil, err
+	}
+
+	sort.Sort(ByBirthday(contacts))
+	return contacts, nil
+}
+
+func GetContact(config LDAPConfig, dn string) (Contact, error) {
+	request := SearchRequest(config.BaseDN)
+	request.BaseDN = dn
+	request.Scope = ldap.ScopeBaseObject
+
+	var contacts []Contact
+	err := getEntries(config, request, func(e *ldap.Entry) {
+		contacts = append(contacts, FromEntry(e))
+	})
+	if err != nil {
+		return Contact{}, err
+	}
+
+	switch len(contacts) {
+	case 1:
+		return contacts[0], nil
+	case 0:
+		return Contact{}, errors.New("err not found")
+	default:
+		sort.Sort(ByBirthday(contacts))
+		return contacts[0], nil
+	}
+}
+
+func getEntries(config LDAPConfig, request *ldap.SearchRequest, handle func(*ldap.Entry)) error {
+	conn, err := ldap.Dial("tcp", fmt.Sprintf("%s:%s", config.Host, config.Port))
+	if err != nil {
+		return err
 	}
 	defer conn.Close()
 
 	err = conn.Bind(config.Username, config.Password)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	request := ldap.NewSearchRequest(
-		fmt.Sprintf("ou=contacts,%s", config.BaseDN),
-		ldap.ScopeWholeSubtree, ldap.NeverDerefAliases, 0, 0, false,
-		"(&(objectClass=contact))",
-		[]string{"cn", "displayName", "birthDate"}, nil)
 
 	s, err := conn.Search(request)
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	var birthdays []Anniversary
 
 	for _, e := range s.Entries {
-		birthdate := time.Time{}
-		name := e.GetAttributeValue("displayName")
-		bday := e.GetAttributeValue("birthDate")
-		if name == "" {
-			name = e.GetAttributeValue("cn")
-		}
-		if bday != "" {
-			for _, parseString := range parseStrings {
-				if birthdate, err = time.ParseInLocation(parseString, bday, time.Local); err == nil {
-					break
-				}
-			}
-			if err != nil {
-				fmt.Printf("error parsing %q: %v\n", bday, err)
-				birthdate = time.Time{}
-			}
-		}
-		birthdays = append(birthdays, Anniversary{Name: name, Event: birthdate})
+		handle(e)
 	}
-
-	sort.Sort(ByMonthDay(birthdays))
-
-	return birthdays, nil
+	return nil
 }

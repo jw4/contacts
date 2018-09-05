@@ -1,0 +1,17 @@
+<html>
+
+<body>
+    <h1>{{ .Name }}</h1>
+    <section>
+        <span class=first>{{ .First }}</span><br>
+        <span class=last>{{ .Last }}</span><br>
+        <span class=birthdate>{{ .BirthDate }}</span><br>
+        <span class=email>{{ .Email }}</span><br>
+        <span class=phone>{{ .Phone }}</span><br> {{ range .Labels }}<span class=label>{{ . }}</span> {{end}}
+    </section>
+    <footer>
+        <a href="/">Back to list</a>
+    </footer>
+</body>
+
+</html>
