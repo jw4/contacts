@@ -1,0 +1,14 @@
+version: "3.7"
+
+services:
+  api:
+    image: "docker.w.jw4.us/contacts:latest"
+    environment: 
+      - LDAP_HOST=${LDAP_HOST}
+      - LDAP_PORT=${LDAP_PORT}
+      - LDAP_USER=${LDAP_USER}
+      - LDAP_PASS=${LDAP_PASS}
+      - LDAP_BASE=${LDAP_BASE}
+    ports:
+      - "8818:8818"
+
