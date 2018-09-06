@@ -14,8 +14,8 @@ type Contact struct {
 	First    string
 	Last     string
 	Birthday time.Time
-	Email    string
-	Phone    string
+	Email    []string
+	Phone    []string
 	Labels   []string
 }
 
@@ -40,8 +40,8 @@ func FromEntry(entry *ldap.Entry) Contact {
 		Birthday: parseDate(entry.GetAttributeValue("birthDate")),
 		First:    entry.GetAttributeValue("givenName"),
 		Last:     entry.GetAttributeValue("sn"),
-		Email:    entry.GetAttributeValue("mail"),
-		Phone:    entry.GetAttributeValue("telephoneNumber"),
+		Email:    entry.GetAttributeValues("mail"),
+		Phone:    entry.GetAttributeValues("telephoneNumber"),
 		Labels:   entry.GetAttributeValues("label"),
 	}
 	if c.Name == "" {

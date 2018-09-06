@@ -1,0 +1,46 @@
+{{ template "header" $ }}{{ with index $.Contacts 0 }}
+<h1>{{ $.Title }}</h1>
+<form method=post>
+    <table title="ID: {{ .ID }}">
+        <tr>
+            <td>First</td>
+            <td><input type=text name=given value="{{ .First }}" placeholder="First Name" /></td>
+        </tr>
+        <tr>
+            <td>Last</td>
+            <td><input type=text name=sn value="{{ .Last }}" placeholder="Last Name" /></td>
+        </tr>
+        <tr>
+            <td>Display</td>
+            <td><input type=text name=displayName value="{{ .Name }}" placeholder="Display Name" /></td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td>{{ range .Email }}
+                <input type=email name=mail value="{{ . }}" placeholder="Email Address" /> {{end}}
+                <input type=email name=mail placeholder="Email Address" /></td>
+        </tr>
+        <tr>
+            <td>Phone</td>
+            <td>{{ range .Phone }}
+                <input type=tel name=telephoneNumber value="{{ . }}" placeholder="Telephone Number" /> {{end}}
+                <input type=tel name=telephoneNumber placeholder="Telephone Number" /></td>
+        </tr>
+        <tr>
+            <td>Birthdate</td>
+            <td>
+                <input type=number name=birthDay value="{{ .BirthDayOfMonth }}" placeholder="Day" />
+                <select type=select name=birthMonth value="{{ .BirthMonth }}">{{ range months }}
+                <option>{{ . }}</option>{{ end }}
+                </select>
+                <input type=number name=birthYear value="{{ .BirthYear }}" placeholder="Year" /></td>
+        </tr>
+        <tr class=labels>
+            <td>Labels</td>
+            <td>{{ range .Labels }}<span class=label><a href="javascript:null;">{{ . }}</a></span> {{end}}</td>
+        </tr>
+    </table>
+    <input type=submit name=submit value=Cancel />
+    <input type=submit name=submit value=Save />
+</form>
+{{ end }} {{ template "footer" $ }}

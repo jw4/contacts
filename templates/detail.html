@@ -10,19 +10,24 @@
         <td>{{ .Last }}</td>
     </tr>
     <tr>
+        <td>Display</td>
+        <td>{{ .Name }}</td>
+    </tr>
+    <tr>
         <td>Email</td>
-        <td><a href="mailto:{{ .Email }}">{{ .Email }}</a></td>
+        <td>{{ $name := .Name }}{{ range .Email }}<span class=email><a href='mailto:"{{ $name }}" <{{ . }}>'>{{ . }}</a></span> {{end}}</td>
     </tr>
     <tr>
         <td>Phone</td>
-        <td><a href="tel:{{ .Phone }}">{{ .Phone }}</a></td>
+        <td>{{ range .Phone }}<span class=phone><a href="tel:{{ . }}">{{ . }}</a></span> {{end}}</td>
     </tr>
     <tr>
         <td>Birthdate</td>
         <td>{{ .BirthDate }}</td>
     </tr>
-    <tr>
+    <tr class=labels>
         <td>Labels</td>
-        <td>{{ range .Labels }}<span class=label><a href="/contacts/list/?label={{ . }}">{{ . }}</a></span> {{end}}</td>
+        <td>{{ range .Labels }}<span class=label><a href='{{ birthdaysLink ( makeValues "label" . ) }}'>{{ . }}</a></span> {{end}}</td>
     </tr>
-</table>{{ end }} {{ template "footer" $ }}
+</table>
+<a href="{{ editLink $.Request.Form }}">Edit {{ .Name }}</a> {{ end }} {{ template "footer" $ }}

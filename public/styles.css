@@ -32,6 +32,11 @@ td:first-child {
     text-align: right;
     font-weight: bold;
     padding-right: 1em;
+    vertical-align: top;
+}
+
+tr.labels td:last-child {
+    padding: 1em 0;
 }
 
 tbody.birthdays::before {
@@ -116,4 +121,36 @@ span.label {
 
 span.label a {
     color: white;
+}
+
+td span.email,
+td span.phone {
+    display: block;
+}
+
+input {
+    display: block;
+    width: 30em;
+    padding: 2px;
+    margin: 2px;
+}
+
+input[name=birthDay] {
+    display: inline-block;
+    width: 4em;
+}
+
+input[name=birthYear] {
+    display: inline-block;
+    width: 5em;
+}
+
+select[name=birthMonth] {
+    display: inline-block;
+    width: 8em;
+}
+
+input[type=submit] {
+    display: inline-block;
+    width: 8em;
 }
