@@ -1,7 +1,7 @@
 {{ template "header" $ }}
 <h1>{{ $.Title }}</h1>
 <table class="contacts">
-    <caption>{{ len $.Contacts }} people ({{ mailtoLinks $.Contacts }})</caption>
+    <caption>Total: {{ len $.Contacts }} ( {{ mailtoLinks $.Contacts }} )</caption>
     <thead>
         <tr>
             <th>Name</th>

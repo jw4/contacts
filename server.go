@@ -23,7 +23,13 @@ func NewWebServer(route string, config LDAPConfig, templatesFolder string) (http
 		return nil, err
 	}
 
-	return server, nil
+	mux := http.NewServeMux()
+	mux.HandleFunc(server.editRoute(), server.handleEdit)
+	mux.HandleFunc(server.detailRoute(), server.showDetail)
+	mux.HandleFunc(server.birthdaysRoute(), server.showBirthdays)
+	mux.HandleFunc(server.listRoute(), server.showList)
+	mux.Handle("/", http.NotFoundHandler())
+	return mux, nil
 }
 
 const (
@@ -68,51 +74,22 @@ func (s *server) init(templatesFolder string) error {
 	return nil
 }
 
-func (s *server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Printf("PATH %q", r.URL.Path)
+func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		log.Printf("error parsing form: %v", err)
 		http.Error(w, "Bad Input", http.StatusBadRequest)
 		return
 	}
-	switch r.URL.Path {
-	case s.rootRoute(), s.listRoute():
-		s.showList(w, r)
-	case s.birthdaysRoute():
-		s.showBirthdays(w, r)
-	case s.detailRoute():
-		s.showDetail(w, r)
-	case s.editRoute():
-		switch r.Method {
-		case "POST":
-			s.handleEdit(w, r)
-		default:
-			s.showEdit(w, r)
-		}
+
+	switch r.Method {
+	case "POST":
+		s.handleEditPost(w, r)
 	default:
+		s.showEdit(w, r)
 	}
 }
 
-func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
-	dn := r.Form.Get("dn")
-	contact, err := GetContact(s.config, dn)
-	if err != nil {
-		log.Printf("finding %q: %v", dn, err)
-		http.NotFound(w, r)
-		return
-	}
-
-	if err = s.tmpl.ExecuteTemplate(
-		w, editTemplate, viewData{
-			Title:    makeTitle("Edit", contact.Name),
-			Contacts: []Contact{contact},
-			Request:  r,
-		}); err != nil {
-		log.Fatalf("executing template: %v", err)
-	}
-}
-
-func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
+func (s *server) handleEditPost(w http.ResponseWriter, r *http.Request) {
 	switch r.Form.Get("submit") {
 	case "Save":
 		log.Printf("POST: %+v", r.Form)
@@ -145,7 +122,32 @@ func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, s.detailLink(r.Form), http.StatusSeeOther)
 }
 
+func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
+	dn := r.Form.Get("dn")
+	contact, err := GetContact(s.config, dn)
+	if err != nil {
+		log.Printf("finding %q: %v", dn, err)
+		http.NotFound(w, r)
+		return
+	}
+
+	if err = s.tmpl.ExecuteTemplate(
+		w, editTemplate, viewData{
+			Title:    makeTitle("Edit", contact.Name),
+			Contacts: []Contact{contact},
+			Request:  r,
+		}); err != nil {
+		log.Fatalf("executing template: %v", err)
+	}
+}
+
 func (s *server) showDetail(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("error parsing form: %v", err)
+		http.Error(w, "Bad Input", http.StatusBadRequest)
+		return
+	}
+
 	dn := r.Form.Get("dn")
 	contact, err := GetContact(s.config, dn)
 	if err != nil {
@@ -164,6 +166,12 @@ func (s *server) showDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) showList(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("error parsing form: %v", err)
+		http.Error(w, "Bad Input", http.StatusBadRequest)
+		return
+	}
+
 	labels, _ := r.Form["label"]
 	records, err := GetContacts(s.config, labels)
 	if err != nil {
@@ -183,6 +191,12 @@ func (s *server) showList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) showBirthdays(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("error parsing form: %v", err)
+		http.Error(w, "Bad Input", http.StatusBadRequest)
+		return
+	}
+
 	labels, _ := r.Form["label"]
 	records, err := GetContacts(s.config, labels)
 	if err != nil {
