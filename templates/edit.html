@@ -37,7 +37,10 @@
         </tr>
         <tr class=labels>
             <td>Labels</td>
-            <td>{{ range .Labels }}<span class=label><a href="javascript:null;">{{ . }}</a></span> {{end}}</td>
+            <td>{{ range .Labels }}
+                <input type=string name=label value="{{ . }}" placeholder="Label" /> {{end}}
+                <input type=string name=label placeholder="Label" />
+            </td>
         </tr>
     </table>
     <input type=submit name=submit value=Cancel />

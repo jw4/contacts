@@ -3,6 +3,7 @@ package contacts
 import (
 	"errors"
 	"fmt"
+	"log"
 	"sort"
 
 	ldap "gopkg.in/ldap.v2"
@@ -50,6 +51,29 @@ func GetContact(config LDAPConfig, dn string) (Contact, error) {
 		sort.Sort(ByName(contacts))
 		return contacts[0], nil
 	}
+}
+
+func SaveContact(config LDAPConfig, contact Contact) error {
+	if err := save(config, ModifyRequest(contact)); err != nil {
+		log.Printf("error saving changes: %v", err)
+		return errors.New("error saving changes")
+	}
+	return nil
+}
+
+func save(config LDAPConfig, request *ldap.ModifyRequest) error {
+	conn, err := ldap.Dial("tcp", fmt.Sprintf("%s:%s", config.Host, config.Port))
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	err = conn.Bind(config.Username, config.Password)
+	if err != nil {
+		return err
+	}
+
+	return conn.Modify(request)
 }
 
 func getEntries(config LDAPConfig, request *ldap.SearchRequest, handle func(*ldap.Entry)) error {

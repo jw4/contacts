@@ -5,6 +5,7 @@
     <thead>
         <tr>
             <th>Name</th>
+            <th>Birthday</th>
             <th>Phone</th>
             <th>Email</th>
         </tr>
@@ -12,6 +13,7 @@
     <tbody>{{ range .Contacts }}
         <tr>
             <td><a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{.Name}}</span></a></td>
+            <td>{{ .BirthDate }}</td>
             <td>{{ with .Phone }}<a href="tel:{{ index . 0 }}">{{ index . 0 }}</a>{{end}}</td>
             <td>{{ mailtoLink . }}</td>
         </tr>{{ end }}

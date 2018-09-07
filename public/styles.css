@@ -26,12 +26,21 @@ table {
 
 th {
     text-align: left;
+    font-weight: bold;
+    padding-right: 1em;
+}
+
+th:first-child {
+    text-align: right;
+}
+
+td {
+    padding-right: 1em;
 }
 
 td:first-child {
     text-align: right;
     font-weight: bold;
-    padding-right: 1em;
     vertical-align: top;
 }
 

@@ -9,7 +9,9 @@ import (
 	"os"
 	"path"
 	"sort"
+	"strconv"
 	"strings"
+	"time"
 
 	"jw4.us/contacts"
 )
@@ -91,7 +93,35 @@ func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
-	log.Printf("POST: %+v", r.Form)
+	switch r.Form.Get("submit") {
+	case "Save":
+		log.Printf("POST: %+v", r.Form)
+		birthday := time.Time{}
+		if month, ok := monthValues[r.Form.Get("birthMonth")]; ok {
+			if day, err := strconv.Atoi(r.Form.Get("birthDay")); err == nil {
+				year, err := strconv.Atoi(r.Form.Get("birthYear"))
+				if err != nil {
+					year = 0
+				}
+				birthday = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+			}
+		}
+		if err := contacts.SaveContact(s.config, contacts.Contact{
+			ID:       r.Form.Get("dn"),
+			Name:     r.Form.Get("displayName"),
+			First:    r.Form.Get("given"),
+			Last:     r.Form.Get("sn"),
+			Birthday: birthday,
+			Email:    dedupe(r.Form["mail"]),
+			Phone:    dedupe(r.Form["telephoneNumber"]),
+			Labels:   dedupe(r.Form["label"]),
+		}); err != nil {
+			log.Printf("error saving: %v", err)
+			http.Error(w, "unexpected error", http.StatusInternalServerError)
+			return
+		}
+	default:
+	}
 	http.Redirect(w, r, detailLink(r.Form), http.StatusSeeOther)
 }
 
@@ -142,6 +172,24 @@ func makeTitle(main string, parts ...string) string {
 	return strings.Join(append([]string{main}, parts...), " :: ")
 }
 
+func dedupe(list []string) []string {
+	set := map[string]int{}
+	i := 0
+	for _, item := range list {
+		if item != "" {
+			if _, ok := set[item]; !ok {
+				set[item] = i
+				i++
+			}
+		}
+	}
+	filtered := make([]string, i)
+	for k, v := range set {
+		filtered[v] = k
+	}
+	return filtered
+}
+
 type viewData struct {
 	Title    string
 	Labels   []string
@@ -175,7 +223,21 @@ var (
 		"November",
 		"December",
 	}
-	detailFilter = []string{"dn", "label"}
+	monthValues = map[string]time.Month{
+		"January":   time.January,
+		"February":  time.February,
+		"March":     time.March,
+		"April":     time.April,
+		"May":       time.May,
+		"June":      time.June,
+		"July":      time.July,
+		"August":    time.August,
+		"September": time.September,
+		"October":   time.October,
+		"November":  time.November,
+		"December":  time.December,
+	}
+	detailFilter = []string{"dn"}
 	listFilter   = []string{"label"}
 )
 

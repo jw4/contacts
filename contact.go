@@ -33,6 +33,18 @@ func SearchRequest(base string, labels []string) *ldap.SearchRequest {
 		attributes, nil)
 }
 
+func ModifyRequest(contact Contact) *ldap.ModifyRequest {
+	req := ldap.NewModifyRequest(contact.ID)
+	req.Replace("displayName", []string{contact.Name})
+	req.Replace("birthDate", []string{contact.BirthDate()})
+	req.Replace("givenName", []string{contact.First})
+	req.Replace("sn", []string{contact.Last})
+	req.Replace("mail", contact.Email)
+	req.Replace("telephoneNumber", contact.Phone)
+	req.Replace("label", contact.Labels)
+	return req
+}
+
 func FromEntry(entry *ldap.Entry) Contact {
 	c := Contact{
 		ID:       entry.DN,
@@ -99,6 +111,16 @@ func (c Contact) BirthYear() int {
 		return -1
 	}
 	return c.Birthday.Year()
+}
+
+func (c Contact) FullBirthDate() string {
+	if c.Birthday.IsZero() {
+		return ""
+	}
+	if c.Birthday.Year() > 0 {
+		return c.Birthday.Format("Monday, Jan _2, 2006")
+	}
+	return c.Birthday.Format("Jan _2")
 }
 
 type ByName []Contact
