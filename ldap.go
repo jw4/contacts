@@ -53,11 +53,15 @@ func GetContact(config LDAPConfig, dn string) (Contact, error) {
 	}
 }
 
-func SaveContact(config LDAPConfig, contact Contact) error {
-	if err := save(config, ModifyRequest(contact)); err != nil {
-		log.Printf("error saving changes: %v", err)
-		return errors.New("error saving changes")
+func SaveContact(config LDAPConfig, original, updated Contact) error {
+	if updated.ID != "" && original.ID == updated.ID {
+		if err := save(config, ModifyRequest(original, updated)); err != nil {
+			log.Printf("error saving changes: %v", err)
+			return errors.New("error saving changes")
+		}
+		return nil
 	}
+	log.Printf("creating new contact not supported yet")
 	return nil
 }
 

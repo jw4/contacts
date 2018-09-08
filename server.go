@@ -92,7 +92,6 @@ func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
 func (s *server) handleEditPost(w http.ResponseWriter, r *http.Request) {
 	switch r.Form.Get("submit") {
 	case "Save":
-		log.Printf("POST: %+v", r.Form)
 		birthday := time.Time{}
 		if month, ok := monthValues[r.Form.Get("birthMonth")]; ok {
 			if day, err := strconv.Atoi(r.Form.Get("birthDay")); err == nil {
@@ -103,7 +102,11 @@ func (s *server) handleEditPost(w http.ResponseWriter, r *http.Request) {
 				birthday = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 			}
 		}
-		if err := SaveContact(s.config, Contact{
+		old, err := GetContact(s.config, r.Form.Get("dn"))
+		if err != nil {
+			old = Contact{}
+		}
+		if err = SaveContact(s.config, old, Contact{
 			ID:       r.Form.Get("dn"),
 			Name:     r.Form.Get("displayName"),
 			First:    r.Form.Get("given"),

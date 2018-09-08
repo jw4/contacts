@@ -30,8 +30,9 @@
             <td>Birthdate</td>
             <td>
                 <input type=number name=birthDay value="{{ .BirthDayOfMonth }}" placeholder="Day" />
-                <select type=select name=birthMonth value="{{ .BirthMonth }}">{{ range months }}
-                <option>{{ . }}</option>{{ end }}
+                <select type=select name=birthMonth>
+                  <option value=""> -- select month -- </option>{{ $month := .BirthMonth }}{{ range months }}
+                  <option value="{{ . }}"{{ if eq $month . }} selected="selected"{{end}}>{{ . }}</option>{{ end }}
                 </select>
                 <input type=number name=birthYear value="{{ .BirthYear }}" placeholder="Year" /></td>
         </tr>

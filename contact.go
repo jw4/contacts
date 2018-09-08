@@ -2,6 +2,7 @@ package contacts
 
 import (
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -33,15 +34,31 @@ func SearchRequest(base string, labels []string) *ldap.SearchRequest {
 		attributes, nil)
 }
 
-func ModifyRequest(contact Contact) *ldap.ModifyRequest {
-	req := ldap.NewModifyRequest(contact.ID)
-	req.Replace("displayName", []string{contact.Name})
-	req.Replace("birthDate", []string{contact.BirthDate()})
-	req.Replace("givenName", []string{contact.First})
-	req.Replace("sn", []string{contact.Last})
-	req.Replace("mail", contact.Email)
-	req.Replace("telephoneNumber", contact.Phone)
-	req.Replace("label", contact.Labels)
+func ModifyRequest(original, updated Contact) *ldap.ModifyRequest {
+	req := ldap.NewModifyRequest(updated.ID)
+
+	update := func(key, oldval, newval string) {
+		if oldval != newval {
+			if newval == "" {
+				req.Delete(key, []string{oldval})
+			} else if oldval == "" {
+				req.Add(key, []string{newval})
+			} else {
+				req.Replace(key, []string{newval})
+			}
+		}
+	}
+
+	update("displayName", original.Name, updated.Name)
+	update("birthDate", original.BirthDate(), updated.FullBirthDate())
+	update("givenName", original.First, updated.First)
+	update("sn", original.Last, updated.Last)
+
+	req.Replace("mail", updated.Email)
+	req.Replace("telephoneNumber", updated.Phone)
+	req.Replace("label", updated.Labels)
+
+	log.Printf("ModifyRequest: %+v", req)
 	return req
 }
 
@@ -118,9 +135,9 @@ func (c Contact) FullBirthDate() string {
 		return ""
 	}
 	if c.Birthday.Year() > 0 {
-		return c.Birthday.Format("Monday, Jan _2, 2006")
+		return c.Birthday.Format("Monday, January 2, 2006")
 	}
-	return c.Birthday.Format("Jan _2")
+	return c.Birthday.Format("January 2")
 }
 
 type ByName []Contact
