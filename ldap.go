@@ -11,9 +11,9 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-func GetContacts(config Config, labels []string) ([]Contact, error) {
+func GetContacts(config Config, labels []string) ([]*Contact, error) {
 	request := FindByLabel(config.BaseDN, labels)
-	var contacts []Contact
+	var contacts []*Contact
 	err := getEntries(config, request, func(e *ldap.Entry) {
 		contacts = append(contacts, FromEntry(e))
 	})
@@ -23,22 +23,22 @@ func GetContacts(config Config, labels []string) ([]Contact, error) {
 	return contacts, nil
 }
 
-func GetContact(config Config, dn string) (Contact, error) {
+func GetContact(config Config, dn string) (*Contact, error) {
 	request := FindByLabel(config.BaseDN, nil)
 	request.BaseDN = dn
 	request.Scope = ldap.ScopeBaseObject
 
-	var contacts []Contact
+	var contacts []*Contact
 	err := getEntries(config, request, func(e *ldap.Entry) {
 		contacts = append(contacts, FromEntry(e))
 	})
 	if err != nil {
-		return Contact{}, err
+		return nil, err
 	}
 
 	switch len(contacts) {
 	case 0:
-		return Contact{}, errors.New("err not found")
+		return nil, errors.New("err not found")
 	case 1:
 		return contacts[0], nil
 	default:
@@ -47,7 +47,7 @@ func GetContact(config Config, dn string) (Contact, error) {
 	}
 }
 
-func SaveContact(config Config, original, updated Contact) error {
+func SaveContact(config Config, original, updated *Contact) error {
 	if updated.ID != "" && original.ID == updated.ID {
 		if err := save(config, Update(original, updated)); err != nil {
 			log.Printf("error saving changes: %v", err)
@@ -114,35 +114,94 @@ func getEntries(config Config, request *ldap.SearchRequest, handle func(*ldap.En
 	return nil
 }
 
+func setAttributes(c interface{}, entry *ldap.Entry) {
+	if c == nil {
+		return
+	}
+	handleLDAPAttributes(c, func(n string, v reflect.Value) {
+		attrs := entry.GetAttributeValues(n)
+		if !v.CanSet() {
+			return
+		}
+		if !v.CanInterface() {
+			return
+		}
+		switch v.Interface().(type) {
+		case string:
+			sval := ""
+			if len(attrs) > 0 {
+				sval = attrs[0]
+			}
+			v.SetString(sval)
+		case []string:
+			v.Set(reflect.ValueOf(attrs))
+		case time.Time:
+			sval := ""
+			if len(attrs) > 0 {
+				sval = attrs[0]
+			}
+			v.Set(reflect.ValueOf(parseDate(sval)))
+		}
+	})
+}
+
+func attributeNames(c interface{}) []string {
+	var names []string
+	if c == nil {
+		return names
+	}
+
+	handleLDAPAttributes(c, func(n string, v reflect.Value) {
+		names = append(names, n)
+	})
+
+	return names
+}
+
 func attributeValues(c interface{}) map[string][]string {
 	vals := map[string][]string{}
+	if c == nil {
+		return vals
+	}
 
-	// deref inteface
+	handleLDAPAttributes(c, func(n string, fval reflect.Value) {
+		if !fval.CanInterface() {
+			return
+		}
+		switch v := fval.Interface().(type) {
+		case string:
+			if v != "" {
+				vals[n] = []string{v}
+			}
+		case []string:
+			if len(v) > 0 {
+				vals[n] = v
+			}
+		case time.Time:
+			if !v.IsZero() {
+				vals[n] = []string{LDAPDate(v).FullDate()}
+			}
+		}
+	})
+
+	return vals
+}
+
+func handleLDAPAttributes(c interface{}, fn func(key string, val reflect.Value)) {
+	if c == nil {
+		return
+	}
+
 	cval := reflect.ValueOf(c).Elem()
-	// c base type
 	ctype := cval.Type()
 
 	for i := 0; i < ctype.NumField(); i++ {
 		field := ctype.Field(i)
 		if n, ok := field.Tag.Lookup("ldap"); ok {
-			val := cval.Field(i)
-			switch v := val.Interface().(type) {
-			case string:
-				if v != "" {
-					vals[n] = []string{v}
-				}
-			case []string:
-				if len(v) > 0 {
-					vals[n] = v
-				}
-			case time.Time:
-				if !v.IsZero() {
-					vals[n] = []string{LDAPDate(v).FullDate()}
-				}
-			}
+			fval := cval.Field(i)
+			fn(n, fval)
 		}
 	}
-	return vals
 }
 
 func changes(cur, updates map[string][]string) map[string]map[string][]string {
@@ -156,6 +215,9 @@ func changes(cur, updates map[string][]string) map[string]map[string][]string {
 		return nil
 	}
 	for k, v := range updates {
+		if k == "cn" {
+			continue
+		}
 		if pre, ok := cur[k]; ok {
 			if reflect.DeepEqual(v, pre) {
 				continue
@@ -184,6 +246,9 @@ func changes(cur, updates map[string][]string) map[string]map[string][]string {
 		}
 	}
 	for k, pre := range cur {
+		if k == "cn" {
+			continue
+		}
 		if _, ok := updates[k]; !ok {
 			diff["delete"][k] = pre
 		}
@@ -239,4 +304,39 @@ func (l LDAPDate) Year() int {
 		return -1
 	}
 	return time.Time(l).Year()
+}
+
+var (
+	dateFormats = []string{
+		"Monday, January 02, 2006",
+		"Monday, January _2, 2006",
+		"Monday, January 2, 2006",
+		"January 02, 2006",
+		"January _2, 2006",
+		"January 2, 2006",
+		"January 02",
+		"January _2",
+		"January 2",
+		"Jan 02, 2006",
+		"Jan _2, 2006",
+		"Jan 2, 2006",
+		"Jan 02",
+		"Jan _2",
+		"Jan 2",
+		"01/02/2006",
+		"1/2/2006",
+		"01/02/06",
+		"1/2/06",
+		"01/02",
+		"1/2",
+	}
+)
+
+func parseDate(given string) time.Time {
+	for _, dateFormat := range dateFormats {
+		if date, err := time.ParseInLocation(dateFormat, given, time.Local); err == nil {
+			return date
+		}
+	}
+	return time.Time{}
 }

@@ -55,8 +55,8 @@ type server struct {
 type viewData struct {
 	Title    string
 	Labels   []string
-	Contacts []Contact
-	ByMonth  map[string][]Contact
+	Contacts []*Contact
+	ByMonth  map[string][]*Contact
 	Request  *http.Request
 }
 
@@ -104,9 +104,9 @@ func (s *server) handleEditPost(w http.ResponseWriter, r *http.Request) {
 		}
 		old, err := GetContact(s.config, r.Form.Get("dn"))
 		if err != nil {
-			old = Contact{}
+			old = &Contact{}
 		}
-		if err = SaveContact(s.config, old, Contact{
+		if err = SaveContact(s.config, old, &Contact{
 			ID:       r.Form.Get("dn"),
 			Name:     r.Form.Get("displayName"),
 			First:    r.Form.Get("given"),
@@ -137,7 +137,7 @@ func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
 	if err = s.tmpl.ExecuteTemplate(
 		w, editTemplate, viewData{
 			Title:    makeTitle("Edit", contact.Name),
-			Contacts: []Contact{contact},
+			Contacts: []*Contact{contact},
 			Request:  r,
 		}); err != nil {
 		log.Fatalf("executing template: %v", err)
@@ -161,7 +161,7 @@ func (s *server) showDetail(w http.ResponseWriter, r *http.Request) {
 		w, detailTemplate,
 		viewData{
 			Title:    makeTitle("Detail", contact.Name),
-			Contacts: []Contact{contact},
+			Contacts: []*Contact{contact},
 			Request:  r,
 		}); err != nil {
 		log.Fatal(err)
@@ -206,7 +206,7 @@ func (s *server) showBirthdays(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 	sort.Sort(ByBirthday(records))
-	ordered := map[string][]Contact{}
+	ordered := map[string][]*Contact{}
 	for _, contact := range records {
 		ordered[contact.BirthMonth()] = append(ordered[contact.BirthMonth()], contact)
 	}

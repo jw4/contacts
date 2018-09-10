@@ -11,11 +11,11 @@
     </tr>
     <tr>
         <td>Display</td>
-        <td>{{ .Name }}</td>
+        <td>{{ .DisplayName }}</td>
     </tr>
     <tr>
         <td>Email</td>
-        <td>{{ $name := .Name }}{{ range .Email }}<span class=email><a href='mailto:"{{ $name }}" <{{ . }}>'>{{ . }}</a></span> {{end}}</td>
+        <td>{{ $name := .DisplayName }}{{ range .Email }}<span class=email><a href='mailto:"{{ $name }}" <{{ . }}>'>{{ . }}</a></span> {{end}}</td>
     </tr>
     <tr>
         <td>Phone</td>
@@ -30,4 +30,4 @@
         <td>{{ range .Labels }}<span class=label><a href='{{ birthdaysLink ( makeValues "label" . ) }}'>{{ . }}</a></span> {{end}}</td>
     </tr>
 </table>
-<a href="{{ editLink $.Request.Form }}">Edit {{ .Name }}</a> {{ end }} {{ template "footer" $ }}
+<a href="{{ editLink $.Request.Form }}">Edit {{ .DisplayName }}</a> {{ end }} {{ template "footer" $ }}

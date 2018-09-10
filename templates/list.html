@@ -12,7 +12,7 @@
     </thead>
     <tbody>{{ range .Contacts }}
         <tr>
-            <td><a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{.Name}}</span></a></td>
+            <td><a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{.DisplayName}}</span></a></td>
             <td>{{ .BirthDate }}</td>
             <td>{{ with .Phone }}<a href="tel:{{ index . 0 }}">{{ index . 0 }}</a>{{end}}</td>
             <td>{{ mailtoLink . }}</td>

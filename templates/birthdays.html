@@ -13,7 +13,7 @@
     <tbody class="birthdays {{ . }}">{{range $month, $contact := index $.ByMonth .}}
         <tr>
             <td><span class=day>{{.BirthDayOfMonth}}</span></td>
-            <td> <a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{.Name}}</span></a></td>
+            <td> <a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{.DisplayName}}</span></a></td>
             <td>{{if .BirthDate}}<span class=birthday title="{{.Age}} old">{{.BirthDate}}</span>{{end}}</td>
         </tr> {{end}}
     </tbody>

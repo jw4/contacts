@@ -12,7 +12,10 @@
         </tr>
         <tr>
             <td>Display</td>
-            <td><input type=text name=displayName value="{{ .Name }}" placeholder="Display Name" /></td>
+            <td>
+                <input type=text name=displayName value="{{ .Name }}" placeholder="Display Name" />
+                <input type=hidden name=cn value="{{ .CommonName }}" />
+            </td>
         </tr>
         <tr>
             <td>Email</td>

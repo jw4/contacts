@@ -30,10 +30,10 @@ var (
 	}
 )
 
-func months() []string                         { return monthNames }
-func makeValues(key, val string) url.Values    { v := url.Values{}; v.Set(key, val); return v }
-func mailtoLinks(list []Contact) template.HTML { return mailtoLink(list...) }
-func mailtoLink(list ...Contact) template.HTML {
+func months() []string                          { return monthNames }
+func makeValues(key, val string) url.Values     { v := url.Values{}; v.Set(key, val); return v }
+func mailtoLinks(list []*Contact) template.HTML { return mailtoLink(list...) }
+func mailtoLink(list ...*Contact) template.HTML {
 	filtered := contactsWithEmail(list...)
 	switch len(filtered) {
 	case 0:
@@ -57,8 +57,8 @@ func mailtoLink(list ...Contact) template.HTML {
 	}
 }
 
-func contactsWithEmail(list ...Contact) []Contact {
-	var filtered []Contact
+func contactsWithEmail(list ...*Contact) []*Contact {
+	var filtered []*Contact
 	for _, contact := range list {
 		if len(contact.Email) > 0 {
 			filtered = append(filtered, contact)

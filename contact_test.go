@@ -17,12 +17,12 @@ func TestAttributeChanges(t *testing.T) {
 		Labels:   []string{"Label", "Another Label"},
 	}
 	vals := c.attributeValues()
-	if len(vals) != 8 {
+	if len(vals) != 7 {
 		t.Errorf("vals was not expected length: %+v", vals)
 	}
 	c1 := &Contact{
 		ID:       "id2",
-		Name:     "Name",
+		Name:     "Name2",
 		Last:     "Last",
 		Birthday: time.Now(),
 		Email:    []string{"Email1"},
