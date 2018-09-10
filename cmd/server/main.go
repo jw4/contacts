@@ -16,7 +16,7 @@ const (
 )
 
 func main() {
-	config := contacts.LDAPConfig{
+	config := contacts.Config{
 		Host:     os.Getenv("LDAP_HOST"),
 		Port:     os.Getenv("LDAP_PORT"),
 		Username: os.Getenv("LDAP_USER"),

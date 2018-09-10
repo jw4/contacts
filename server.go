@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-func NewWebServer(route string, config LDAPConfig, templatesFolder string) (http.Handler, error) {
+func NewWebServer(route string, config Config, templatesFolder string) (http.Handler, error) {
 	server := &server{
 		baseRoute: route,
 		config:    config,
@@ -48,7 +48,7 @@ const (
 
 type server struct {
 	baseRoute string
-	config    LDAPConfig
+	config    Config
 	tmpl      *template.Template
 }
 
