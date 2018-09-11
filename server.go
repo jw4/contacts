@@ -136,7 +136,7 @@ func (s *server) handleSavePost(w http.ResponseWriter, r *http.Request) {
 		}
 	default:
 	}
-	http.Redirect(w, r, s.detailLink(r.Form), http.StatusSeeOther)
+	http.Redirect(w, r, s.listLink(nil), http.StatusSeeOther)
 }
 
 func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
