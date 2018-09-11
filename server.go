@@ -24,26 +24,30 @@ func NewWebServer(route string, config Config, templatesFolder string) (http.Han
 	}
 
 	mux := http.NewServeMux()
-	mux.HandleFunc(server.editRoute(), server.handleEdit)
-	mux.HandleFunc(server.detailRoute(), server.showDetail)
 	mux.HandleFunc(server.birthdaysRoute(), server.showBirthdays)
+	mux.HandleFunc(server.createRoute(), server.handleCreate)
+	mux.HandleFunc(server.deleteRoute(), server.handleDelete)
+	mux.HandleFunc(server.detailRoute(), server.showDetail)
+	mux.HandleFunc(server.editRoute(), server.handleEdit)
 	mux.HandleFunc(server.listRoute(), server.showList)
 	mux.Handle("/", http.NotFoundHandler())
 	return mux, nil
 }
 
 const (
+	birthdaysRoute = "birthdays/"
+	createRoute    = "create/"
+	deleteRoute    = "delete/"
+	detailRoute    = "detail/"
 	editRoute      = "edit/"
 	listRoute      = "list/"
-	createRoute    = "create/"
-	detailRoute    = "detail/"
-	birthdaysRoute = "birthdays/"
 
+	birthdaysTemplate = "birthdays.html"
+	createTemplate    = "create.html"
+	deleteTemplate    = "delete.html"
+	detailTemplate    = "detail.html"
 	editTemplate      = "edit.html"
 	listTemplate      = "list.html"
-	createTemplate    = "create.html"
-	detailTemplate    = "detail.html"
-	birthdaysTemplate = "birthdays.html"
 )
 
 type server struct {
@@ -62,11 +66,12 @@ type viewData struct {
 
 func (s *server) init(templatesFolder string) error {
 	linkFns := map[string]interface{}{
-		"contactsLink":  s.listLink,
-		"editLink":      s.editLink,
-		"createLink":    s.createLink,
-		"detailLink":    s.detailLink,
 		"birthdaysLink": s.birthdaysLink,
+		"contactsLink":  s.listLink,
+		"createLink":    s.createLink,
+		"deleteLink":    s.deleteLink,
+		"detailLink":    s.detailLink,
+		"editLink":      s.editLink,
 	}
 	if _, err := s.tmpl.Funcs(linkFns).ParseGlob(path.Join(templatesFolder, "*.html")); err != nil {
 		return err
@@ -74,9 +79,118 @@ func (s *server) init(templatesFolder string) error {
 	return nil
 }
 
+func (s *server) handleCreate(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("handleCreate: error parsing form: %v", err)
+		http.Error(w, "Bad Input", http.StatusBadRequest)
+		return
+	}
+
+	switch r.Method {
+	case "POST":
+		s.handleCreatePost(w, r)
+	default:
+		s.showCreate(w, r)
+	}
+}
+
+func (s *server) handleCreatePost(w http.ResponseWriter, r *http.Request) {
+	switch r.Form.Get("submit") {
+	case "Save":
+		birthday := time.Time{}
+		if month, ok := monthValues[r.Form.Get("birthMonth")]; ok {
+			if day, err := strconv.Atoi(r.Form.Get("birthDay")); err == nil {
+				year, err := strconv.Atoi(r.Form.Get("birthYear"))
+				if err != nil {
+					year = 0
+				}
+				birthday = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+			}
+		}
+		old, err := Single(s.config, r.Form.Get("dn"))
+		if err != nil {
+			old = &Contact{}
+		}
+		if err = Save(s.config, old, &Contact{
+			Name:     r.Form.Get("displayName"),
+			First:    r.Form.Get("given"),
+			Last:     r.Form.Get("sn"),
+			Suffix:   r.Form.Get("generation"),
+			Birthday: birthday,
+			Email:    dedupe(r.Form["mail"]),
+			Phone:    dedupe(r.Form["telephoneNumber"]),
+			Labels:   dedupe(r.Form["label"]),
+		}); err != nil {
+			log.Printf("error creating: %v", err)
+			http.Error(w, "unexpected error", http.StatusInternalServerError)
+			return
+		}
+	default:
+	}
+	http.Redirect(w, r, s.listLink(nil), http.StatusSeeOther)
+}
+
+func (s *server) showCreate(w http.ResponseWriter, r *http.Request) {
+	contact := &Contact{}
+	if err := s.tmpl.ExecuteTemplate(
+		w, createTemplate, viewData{
+			Title:    makeTitle("Create"),
+			Contacts: []*Contact{contact},
+			Request:  r,
+		}); err != nil {
+		log.Fatalf("executing template: %v", err)
+	}
+}
+
+func (s *server) handleDelete(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("handleDelete: error parsing form: %v", err)
+		http.Error(w, "Bad Input", http.StatusBadRequest)
+		return
+	}
+
+	switch r.Method {
+	case "POST":
+		s.handleDeletePost(w, r)
+	default:
+		s.showDelete(w, r)
+	}
+}
+
+func (s *server) handleDeletePost(w http.ResponseWriter, r *http.Request) {
+	switch r.Form.Get("submit") {
+	case "Delete":
+		if err := Delete(s.config, r.Form.Get("dn")); err != nil {
+			log.Printf("error deleting: %v", err)
+			http.Error(w, "unexpected error", http.StatusInternalServerError)
+			return
+		}
+	default:
+	}
+	http.Redirect(w, r, s.listLink(nil), http.StatusSeeOther)
+}
+
+func (s *server) showDelete(w http.ResponseWriter, r *http.Request) {
+	dn := r.Form.Get("dn")
+	contact, err := Single(s.config, dn)
+	if err != nil {
+		log.Printf("finding %q: %v", dn, err)
+		http.NotFound(w, r)
+		return
+	}
+	if err := s.tmpl.ExecuteTemplate(
+		w, deleteTemplate, viewData{
+			Title:    makeTitle("Confirm Delete", contact.DisplayName()),
+			Contacts: []*Contact{contact},
+			Request:  r,
+		}); err != nil {
+		log.Fatalf("executing template: %v", err)
+	}
+}
+
 func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
-		log.Printf("error parsing form: %v", err)
+		log.Printf("handleEdit: error parsing form: %v", err)
 		http.Error(w, "Bad Input", http.StatusBadRequest)
 		return
 	}
@@ -102,15 +216,16 @@ func (s *server) handleEditPost(w http.ResponseWriter, r *http.Request) {
 				birthday = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
 			}
 		}
-		old, err := GetContact(s.config, r.Form.Get("dn"))
+		old, err := Single(s.config, r.Form.Get("dn"))
 		if err != nil {
 			old = &Contact{}
 		}
-		if err = SaveContact(s.config, old, &Contact{
+		if err = Save(s.config, old, &Contact{
 			ID:       r.Form.Get("dn"),
 			Name:     r.Form.Get("displayName"),
 			First:    r.Form.Get("given"),
 			Last:     r.Form.Get("sn"),
+			Suffix:   r.Form.Get("generation"),
 			Birthday: birthday,
 			Email:    dedupe(r.Form["mail"]),
 			Phone:    dedupe(r.Form["telephoneNumber"]),
@@ -127,7 +242,7 @@ func (s *server) handleEditPost(w http.ResponseWriter, r *http.Request) {
 
 func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
 	dn := r.Form.Get("dn")
-	contact, err := GetContact(s.config, dn)
+	contact, err := Single(s.config, dn)
 	if err != nil {
 		log.Printf("finding %q: %v", dn, err)
 		http.NotFound(w, r)
@@ -152,7 +267,7 @@ func (s *server) showDetail(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dn := r.Form.Get("dn")
-	contact, err := GetContact(s.config, dn)
+	contact, err := Single(s.config, dn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -176,7 +291,7 @@ func (s *server) showList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	labels, _ := r.Form["label"]
-	records, err := GetContacts(s.config, labels)
+	records, err := List(s.config, labels)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -201,7 +316,7 @@ func (s *server) showBirthdays(w http.ResponseWriter, r *http.Request) {
 	}
 
 	labels, _ := r.Form["label"]
-	records, err := GetContacts(s.config, labels)
+	records, err := List(s.config, labels)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -223,18 +338,21 @@ func (s *server) showBirthdays(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *server) rootRoute() string      { return s.baseRoute }
-func (s *server) listRoute() string      { return path.Join(s.baseRoute, listRoute) }
-func (s *server) editRoute() string      { return path.Join(s.baseRoute, editRoute) }
-func (s *server) createRoute() string    { return path.Join(s.baseRoute, createRoute) }
-func (s *server) detailRoute() string    { return path.Join(s.baseRoute, detailRoute) }
-func (s *server) birthdaysRoute() string { return path.Join(s.baseRoute, birthdaysRoute) }
+func (s *server) rootRoute() string { return s.baseRoute }
 
-func (s *server) listLink(v url.Values) string      { return makelink(s.listRoute, listFilter, v) }
-func (s *server) editLink(v url.Values) string      { return makelink(s.editRoute, detailFilter, v) }
-func (s *server) createLink(v url.Values) string    { return makelink(s.createRoute, noneFilter, v) }
-func (s *server) detailLink(v url.Values) string    { return makelink(s.detailRoute, detailFilter, v) }
+func (s *server) birthdaysRoute() string { return path.Join(s.baseRoute, birthdaysRoute) }
+func (s *server) createRoute() string    { return path.Join(s.baseRoute, createRoute) }
+func (s *server) deleteRoute() string    { return path.Join(s.baseRoute, deleteRoute) }
+func (s *server) detailRoute() string    { return path.Join(s.baseRoute, detailRoute) }
+func (s *server) editRoute() string      { return path.Join(s.baseRoute, editRoute) }
+func (s *server) listRoute() string      { return path.Join(s.baseRoute, listRoute) }
+
 func (s *server) birthdaysLink(v url.Values) string { return makelink(s.birthdaysRoute, listFilter, v) }
+func (s *server) createLink(v url.Values) string    { return makelink(s.createRoute, noneFilter, v) }
+func (s *server) deleteLink(v url.Values) string    { return makelink(s.deleteRoute, noneFilter, v) }
+func (s *server) detailLink(v url.Values) string    { return makelink(s.detailRoute, detailFilter, v) }
+func (s *server) editLink(v url.Values) string      { return makelink(s.editRoute, detailFilter, v) }
+func (s *server) listLink(v url.Values) string      { return makelink(s.listRoute, listFilter, v) }
 
 //
 // Helpers

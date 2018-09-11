@@ -17,14 +17,14 @@ func main() {
 		Password: os.Getenv("LDAP_PASS"),
 		BaseDN:   os.Getenv("LDAP_BASE"),
 	}
-	records, err := contacts.GetContacts(config, nil)
+	records, err := contacts.List(config, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
 	sort.Sort(contacts.ByBirthday(records))
 	for _, p := range records {
 		if p.BirthDate() != "" {
-			fmt.Printf("%-13s %-30s %s\n", p.BirthDate(), p.Name, p.Age())
+			fmt.Printf("%-13s %-30s %s\n", p.BirthDate(), p.DisplayName(), p.Age())
 		}
 	}
 }

@@ -11,141 +11,17 @@ import (
 	ldap "gopkg.in/ldap.v2"
 )
 
-const (
-	CNameAttr    = "cn"
-	NameAttr     = "displayName"
-	FirstAttr    = "givenName"
-	LastAttr     = "sn"
-	BirthdayAttr = "birthDate"
-	EmailAttr    = "mail"
-	PhoneAttr    = "telephoneNumber"
-	LabelsAttr   = "label"
-)
-
 type Contact struct {
 	ID         string
 	Name       string    `ldap:"displayName"`
 	First      string    `ldap:"givenName"`
 	Last       string    `ldap:"sn"`
+	Suffix     string    `ldap:"generationQualifier"`
 	Birthday   time.Time `ldap:"birthDate"`
 	Email      []string  `ldap:"mail"`
 	Phone      []string  `ldap:"telephoneNumber"`
 	Labels     []string  `ldap:"label"`
 	CommonName string    `ldap:"cn"`
-}
-
-func GetContacts(config Config, labels []string) ([]*Contact, error) {
-	request := FindByLabel(config.BaseDN, labels)
-	var contacts []*Contact
-	err := getEntries(config, request, func(e *ldap.Entry) {
-		contacts = append(contacts, FromEntry(e))
-	})
-	if err != nil {
-		return nil, err
-	}
-	return contacts, nil
-}
-
-func GetContact(config Config, dn string) (*Contact, error) {
-	request := FindByLabel(config.BaseDN, nil)
-	request.BaseDN = dn
-	request.Scope = ldap.ScopeBaseObject
-
-	var contacts []*Contact
-	err := getEntries(config, request, func(e *ldap.Entry) {
-		contacts = append(contacts, FromEntry(e))
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	switch len(contacts) {
-	case 0:
-		return nil, errors.New("err not found")
-	case 1:
-		return contacts[0], nil
-	default:
-		sort.Sort(ByName(contacts))
-		return contacts[0], nil
-	}
-}
-
-func SaveContact(config Config, original, updated *Contact) error {
-	if updated == nil {
-		return nil
-	}
-	if original == nil {
-		original = &Contact{}
-	}
-	if updated.ID != "" && original.ID == updated.ID {
-		if err := save(config, Update(original, updated)); err != nil {
-			log.Printf("error saving changes: %v", err)
-			return errors.New("error saving changes")
-		}
-		return nil
-	}
-	if err := create(config, Add(config.BaseDN, updated)); err != nil {
-		log.Printf("error creating contact: %v", err)
-		return errors.New("error creating contact")
-	}
-	return nil
-}
-func FindByLabel(baseDN string, labels []string) *ldap.SearchRequest {
-	var b strings.Builder
-	for _, label := range labels {
-		fmt.Fprintf(&b, "(label=%s)", label)
-	}
-	c := &Contact{}
-	return ldap.NewSearchRequest(
-		fmt.Sprintf("ou=contacts,%s", baseDN),
-		ldap.ScopeWholeSubtree,
-		ldap.NeverDerefAliases,
-		0, 0, false,
-		fmt.Sprintf("(&(objectClass=contact)%s)", b.String()),
-		c.attributeNames(), nil)
-}
-
-func Update(original, updated *Contact) *ldap.ModifyRequest {
-	if updated == nil {
-		return nil
-	}
-	changes := original.changes(updated)
-	req := ldap.NewModifyRequest(updated.ID)
-	for k, v := range changes["delete"] {
-		req.Delete(k, v)
-	}
-	for k, v := range changes["add"] {
-		req.Add(k, v)
-	}
-	for k, v := range changes["modify"] {
-		req.Replace(k, v)
-	}
-	for k, v := range changes["replace"] {
-		req.Replace(k, v)
-	}
-	return req
-}
-
-func Add(baseDN string, contact *Contact) *ldap.AddRequest {
-	if contact == nil {
-		return nil
-	}
-	contact.ID = fmt.Sprintf("cn=%s,ou=contacts,%s", contact.DisplayName(), baseDN)
-	req := ldap.NewAddRequest(contact.ID)
-	for k, v := range contact.attributeValues() {
-		req.Attribute(k, v)
-	}
-	return req
-}
-
-func FromEntry(entry *ldap.Entry) *Contact {
-	if entry == nil {
-		return nil
-	}
-
-	c := &Contact{ID: entry.DN}
-	setAttributes(c, entry)
-	return c
 }
 
 func (c *Contact) Age() string { return c.AgeOn(time.Now()) }
@@ -198,60 +74,136 @@ func (c *Contact) changes(other *Contact) map[string]map[string][]string {
 	return changes(attributeValues(c), attributeValues(other))
 }
 
-type ByName []*Contact
-
-func (b ByName) Len() int           { return len(b) }
-func (b ByName) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b ByName) Less(i, j int) bool { return compareName(b[i], b[j]) }
-
-type ByBirthday []*Contact
-
-func (b ByBirthday) Len() int           { return len(b) }
-func (b ByBirthday) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b ByBirthday) Less(i, j int) bool { return compareBirthday(b[i], b[j]) }
-
-func compareBirthday(lhs, rhs *Contact) bool {
-	lb, rb := lhs.birthdayOrZero(), rhs.birthdayOrZero()
-	if lb.Month() == rb.Month() {
-		if lb.Day() == rb.Day() {
-			if lb.Year() == rb.Year() {
-				return compareDisplay(lhs, rhs)
-			}
-			return lb.Year() < rb.Year()
-		}
-		return lb.Day() < rb.Day()
+func List(config Config, labels []string) ([]*Contact, error) {
+	request := buildSearchRequest(config.BaseDN, labels)
+	var contacts []*Contact
+	err := getEntries(config, request, func(e *ldap.Entry) {
+		contacts = append(contacts, fromEntry(e))
+	})
+	if err != nil {
+		return nil, err
 	}
-	return lb.Month() < rb.Month()
+	return contacts, nil
 }
 
-func compareDisplay(lhs, rhs *Contact) bool {
-	if lhs == rhs {
-		return false
+func Single(config Config, dn string) (*Contact, error) {
+	request := buildSearchRequest(config.BaseDN, nil)
+	request.BaseDN = dn
+	request.Scope = ldap.ScopeBaseObject
+
+	var contacts []*Contact
+	err := getEntries(config, request, func(e *ldap.Entry) {
+		contacts = append(contacts, fromEntry(e))
+	})
+	if err != nil {
+		return nil, err
 	}
-	if lhs == nil {
-		return true
+
+	switch len(contacts) {
+	case 0:
+		return nil, errors.New("err not found")
+	case 1:
+		return contacts[0], nil
+	default:
+		sort.Sort(ByName(contacts))
+		return contacts[0], nil
 	}
-	if rhs == nil {
-		return false
-	}
-	return lhs.Name < rhs.Name
 }
 
-func compareName(lhs, rhs *Contact) bool {
-	if lhs == rhs {
-		return false
+func Delete(config Config, dn string) error {
+	if err := del(config, buildDeleteRequest(dn)); err != nil {
+		log.Printf("error deleting %q: %v", dn, err)
+		return errors.New("error deleting")
 	}
-	if lhs == nil {
-		return true
+	return nil
+}
+
+func Save(config Config, original, updated *Contact) error {
+	if updated == nil {
+		return nil
 	}
-	if rhs == nil {
-		return false
+	if original == nil {
+		original = &Contact{}
 	}
-	if lhs.Last == rhs.Last {
-		if lhs.First == rhs.First {
-			return compareDisplay(lhs, rhs)
+	// Update
+	if updated.ID != "" && original.ID == updated.ID {
+		if err := save(config, buildModifyRequest(original, updated)); err != nil {
+			log.Printf("error saving changes: %v", err)
+			return errors.New("error saving changes")
 		}
-		return lhs.First < rhs.First
+		return nil
 	}
-	return lhs.Last < rhs.Last
+	// Create
+	if err := create(config, buildAddRequest(config.BaseDN, updated)); err != nil {
+		log.Printf("error creating contact: %v", err)
+		return errors.New("error creating contact")
+	}
+	return nil
+}
+
+func buildSearchRequest(baseDN string, labels []string) *ldap.SearchRequest {
+	var b strings.Builder
+	for _, label := range labels {
+		fmt.Fprintf(&b, "(label=%s)", label)
+	}
+	c := &Contact{}
+	return ldap.NewSearchRequest(
+		fmt.Sprintf("ou=contacts,%s", baseDN),
+		ldap.ScopeWholeSubtree,
+		ldap.NeverDerefAliases,
+		0, 0, false,
+		fmt.Sprintf("(&(objectClass=contact)%s)", b.String()),
+		c.attributeNames(), nil)
+}
+
+func buildModifyRequest(original, updated *Contact) *ldap.ModifyRequest {
+	if updated == nil {
+		return nil
+	}
+	changes := original.changes(updated)
+	req := ldap.NewModifyRequest(updated.ID)
+	for k, v := range changes["delete"] {
+		req.Delete(k, v)
+	}
+	for k, v := range changes["add"] {
+		req.Add(k, v)
+	}
+	for k, v := range changes["modify"] {
+		req.Replace(k, v)
+	}
+	for k, v := range changes["replace"] {
+		req.Replace(k, v)
+	}
+	return req
+}
+
+func buildAddRequest(baseDN string, contact *Contact) *ldap.AddRequest {
+	if contact == nil {
+		return nil
+	}
+	contact.ID = fmt.Sprintf("cn=%s,ou=contacts,%s", contact.DisplayName(), baseDN)
+	req := ldap.NewAddRequest(contact.ID)
+	req.Attribute("objectClass", []string{
+		"contact",
+		"inetOrgPerson",
+		"organizationalPerson",
+		"person",
+		"top",
+	})
+	for k, v := range contact.attributeValues() {
+		req.Attribute(k, v)
+	}
+	return req
+}
+
+func buildDeleteRequest(dn string) *ldap.DelRequest { return ldap.NewDelRequest(dn, nil) }
+
+func fromEntry(entry *ldap.Entry) *Contact {
+	if entry == nil {
+		return nil
+	}
+
+	c := &Contact{ID: entry.DN}
+	setAttributes(c, entry)
+	return c
 }

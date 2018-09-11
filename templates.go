@@ -43,12 +43,12 @@ func mailtoLink(list ...*Contact) template.HTML {
 		return template.HTML(
 			fmt.Sprintf(
 				"<a href='mailto:%s'>%s</a>",
-				safeEmailAddress(contact.Name, contact.Email[0]),
+				safeEmailAddress(contact.DisplayName(), contact.Email[0]),
 				contact.Email[0]))
 	default:
 		var addr []string
 		for _, contact := range filtered {
-			addr = append(addr, safeEmailAddress(contact.Name, contact.Email[0]))
+			addr = append(addr, safeEmailAddress(contact.DisplayName(), contact.Email[0]))
 		}
 		return template.HTML(
 			fmt.Sprintf(

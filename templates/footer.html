@@ -1,16 +1,11 @@
 {{ define "footer" }}
 
 <section class=labels>{{ with $.Labels }}
-    <span class=label><a href='{{ birthdaysLink ( makeValues "clear" "all" ) }}'>clear labels</a></span> {{ range $.Labels }}
+    <span><a href='{{ birthdaysLink ( makeValues "clear" "all" ) }}'>clear labels</a></span> {{ range $.Labels }}
     <span class=label><a href='{{ birthdaysLink ( makeValues "label" .) }}'>{{ . }}</a></span> {{end}}{{end}}
 </section>
 
-<nav>
-    <ul>
-        <li><a href="{{ birthdaysLink $.Request.Form }}">Birthdays</a></li>
-        <li><a href="{{ contactsLink $.Request.Form }}">Contacts</a></li>
-    </ul>
-</nav>
+{{ template "globalnav" $ }}
 
 </body>
 

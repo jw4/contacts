@@ -1,0 +1,11 @@
+{{ define "globalnav" }}
+
+<nav>
+    <ul>
+        <li><a href="{{ birthdaysLink $.Request.Form }}">Birthdays</a></li>
+        <li><a href="{{ contactsLink $.Request.Form }}">Contacts</a></li>
+        <li><a href="{{ createLink nil }}">Create Contact</a></li>
+    </ul>
+</nav>
+
+{{ end }}

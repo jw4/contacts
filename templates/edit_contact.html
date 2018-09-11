@@ -1,0 +1,53 @@
+{{ define "edit_contact" }}
+<table>
+    <tr>
+        <td>First</td>
+        <td><input type=text name=given value="{{ .First }}" placeholder="First Name" /></td>
+    </tr>
+    <tr>
+        <td>Last</td>
+        <td><input type=text name=sn value="{{ .Last }}" placeholder="Last Name" /></td>
+    </tr>
+    <tr>
+        <td>Generation/Suffix</td>
+        <td><input type=text name=generation value="{{ .Suffix }}" placeholder="Generation: (Jr, Sr, III, etc.)" /></td>
+    </tr>
+    <tr>
+        <td>Display</td>
+        <td>
+            <input type=text name=displayName value="{{ .Name }}" placeholder="Display Name" />
+        </td>
+    </tr>
+    <tr>
+        <td>Email</td>
+        <td>{{ range .Email }}
+            <input type=email name=mail value="{{ . }}" placeholder="Email Address" /> {{end}}
+            <input type=email name=mail placeholder="Email Address" /></td>
+    </tr>
+    <tr>
+        <td>Phone</td>
+        <td>{{ range .Phone }}
+            <input type=tel name=telephoneNumber value="{{ . }}" placeholder="Telephone Number" /> {{end}}
+            <input type=tel name=telephoneNumber placeholder="Telephone Number" /></td>
+    </tr>
+    <tr>
+        <td>Birthdate</td>
+        <td>
+            <input type=number name=birthDay value="{{ .BirthDayOfMonth }}" placeholder="Day" />
+            <select type=select name=birthMonth>
+                  <option value=""> -- select month -- </option>{{ $month := .BirthMonth }}{{ range months }}
+                  <option value="{{ . }}"{{ if eq $month . }} selected="selected"{{end}}>{{ . }}</option>{{ end }}
+                </select>
+            <input type=number name=birthYear value="{{ .BirthYear }}" placeholder="Year" /></td>
+    </tr>
+    <tr class=labels>
+        <td>Labels</td>
+        <td>{{ range .Labels }}
+            <input type=string name=label value="{{ . }}" placeholder="Label" /> {{end}}
+            <input type=string name=label placeholder="Label" />
+            <button id=addLabel>Add Label</button>
+        </td>
+    </tr>
+</table>
+<input type=submit name=submit value=Cancel />
+<input type=submit name=submit value=Save /> {{end}}

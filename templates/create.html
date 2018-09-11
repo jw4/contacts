@@ -2,6 +2,5 @@
 <h1>{{ $.Title }}</h1>
 <form method=post>
     {{ template "edit_contact" . }}
-    <input type=hidden name=cn value="{{ .CommonName }}" />
 </form>
 {{ end }} {{ template "footer" $ }}

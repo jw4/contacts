@@ -22,6 +22,16 @@ func connect(config Config) (*ldap.Conn, error) {
 	return conn, nil
 }
 
+func del(config Config, request *ldap.DelRequest) error {
+	conn, err := connect(config)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	return conn.Del(request)
+}
+
 func save(config Config, request *ldap.ModifyRequest) error {
 	conn, err := connect(config)
 	if err != nil {
