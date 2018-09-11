@@ -15,7 +15,7 @@ clean:
 
 .PHONY: local
 local:
-	go build -tags netgo -ldflags="-s -w -X jw4.us/contacts.Version=${BUILD_VERSION}" -o server ./cmd/server/
+	go build --no-cache -tags netgo -ldflags="-s -w -X jw4.us/contacts.Version=${BUILD_VERSION}" -o server ./cmd/server/
 
 
 .PHONY: image
