@@ -5,11 +5,15 @@ import (
 	"html/template"
 	"net/url"
 	"strings"
+	"time"
 )
 
 var (
 	templateFuncs = map[string]interface{}{
+		"iterN":       iterN,
 		"months":      months,
+		"monthdays":   monthdays,
+		"years":       years,
 		"makeValues":  makeValues,
 		"mailtoLink":  mailtoLink,
 		"mailtoLinks": mailtoLinks,
@@ -30,7 +34,23 @@ var (
 	}
 )
 
+func iterN(start, stop int) []int {
+	r := []int{}
+	if start > stop {
+		for i := start; i >= stop; i-- {
+			r = append(r, i)
+		}
+	} else {
+		for i := start; i <= stop; i++ {
+			r = append(r, i)
+		}
+	}
+	return r
+}
+
 func months() []string                          { return monthNames }
+func monthdays() []int                          { return iterN(1, 31) }
+func years() []int                              { return iterN(time.Now().Year()+1, time.Now().Year()-100) }
 func makeValues(key, val string) url.Values     { v := url.Values{}; v.Set(key, val); return v }
 func mailtoLinks(list []*Contact) template.HTML { return mailtoLink(list...) }
 func mailtoLink(list ...*Contact) template.HTML {

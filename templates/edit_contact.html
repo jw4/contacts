@@ -63,12 +63,19 @@
     <tr>
         <td>Birthdate</td>
         <td>
-            <input type=number name=birthDay value="{{ .BirthDayOfMonth }}" placeholder="Day" />
-            <select type=select name=birthMonth>
-                  <option value=""> -- select month -- </option>{{ $month := .BirthMonth }}{{ range months }}
-                  <option value="{{ . }}"{{ if eq $month . }} selected="selected"{{end}}>{{ . }}</option>{{ end }}
-                </select>
-            <input type=number name=birthYear value="{{ .BirthYear }}" placeholder="Year" /></td>
+            <select name=birthDay>
+              <option value=""> -- day -- </option>{{ $day := .BirthDayOfMonth }}{{ range monthdays }}
+              <option value="{{ . }}"{{ if eq $day . }} selected="selected"{{end}}>{{ . }}</option>{{end}}
+            </select>
+            <select name=birthMonth>
+              <option value=""> -- month -- </option>{{ $month := .BirthMonth }}{{ range months }}
+              <option value="{{ . }}"{{ if eq $month . }} selected="selected"{{end}}>{{ . }}</option>{{end}}
+            </select>
+            <select name=birthYear>
+              <option value=""> -- year -- </option>{{ $year := .BirthYear }}{{ range years }}
+              <option value="{{ . }}"{{ if eq $year . }} selected="selected"{{end}}>{{ . }}</option>{{end}}
+            </select>
+        </td>
     </tr>
     <tr class=labels>
         <td>Labels</td>
