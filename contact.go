@@ -1,8 +1,10 @@
 package contacts
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
@@ -32,6 +34,62 @@ type Contact struct {
 	CommonName string    `ldap:"cn"`
 }
 
+func GetContacts(config Config, labels []string) ([]*Contact, error) {
+	request := FindByLabel(config.BaseDN, labels)
+	var contacts []*Contact
+	err := getEntries(config, request, func(e *ldap.Entry) {
+		contacts = append(contacts, FromEntry(e))
+	})
+	if err != nil {
+		return nil, err
+	}
+	return contacts, nil
+}
+
+func GetContact(config Config, dn string) (*Contact, error) {
+	request := FindByLabel(config.BaseDN, nil)
+	request.BaseDN = dn
+	request.Scope = ldap.ScopeBaseObject
+
+	var contacts []*Contact
+	err := getEntries(config, request, func(e *ldap.Entry) {
+		contacts = append(contacts, FromEntry(e))
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	switch len(contacts) {
+	case 0:
+		return nil, errors.New("err not found")
+	case 1:
+		return contacts[0], nil
+	default:
+		sort.Sort(ByName(contacts))
+		return contacts[0], nil
+	}
+}
+
+func SaveContact(config Config, original, updated *Contact) error {
+	if updated == nil {
+		return nil
+	}
+	if original == nil {
+		original = &Contact{}
+	}
+	if updated.ID != "" && original.ID == updated.ID {
+		if err := save(config, Update(original, updated)); err != nil {
+			log.Printf("error saving changes: %v", err)
+			return errors.New("error saving changes")
+		}
+		return nil
+	}
+	if err := create(config, Add(config.BaseDN, updated)); err != nil {
+		log.Printf("error creating contact: %v", err)
+		return errors.New("error creating contact")
+	}
+	return nil
+}
 func FindByLabel(baseDN string, labels []string) *ldap.SearchRequest {
 	var b strings.Builder
 	for _, label := range labels {
@@ -48,6 +106,9 @@ func FindByLabel(baseDN string, labels []string) *ldap.SearchRequest {
 }
 
 func Update(original, updated *Contact) *ldap.ModifyRequest {
+	if updated == nil {
+		return nil
+	}
 	changes := original.changes(updated)
 	req := ldap.NewModifyRequest(updated.ID)
 	for k, v := range changes["delete"] {
@@ -62,7 +123,6 @@ func Update(original, updated *Contact) *ldap.ModifyRequest {
 	for k, v := range changes["replace"] {
 		req.Replace(k, v)
 	}
-	log.Printf("UPDATE: %+v", req)
 	return req
 }
 

@@ -60,7 +60,7 @@ func mailtoLink(list ...*Contact) template.HTML {
 func contactsWithEmail(list ...*Contact) []*Contact {
 	var filtered []*Contact
 	for _, contact := range list {
-		if len(contact.Email) > 0 {
+		if contact != nil && len(contact.Email) > 0 {
 			filtered = append(filtered, contact)
 		}
 	}

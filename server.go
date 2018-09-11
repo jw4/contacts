@@ -136,7 +136,7 @@ func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
 
 	if err = s.tmpl.ExecuteTemplate(
 		w, editTemplate, viewData{
-			Title:    makeTitle("Edit", contact.Name),
+			Title:    makeTitle("Edit", contact.DisplayName()),
 			Contacts: []*Contact{contact},
 			Request:  r,
 		}); err != nil {
@@ -160,7 +160,7 @@ func (s *server) showDetail(w http.ResponseWriter, r *http.Request) {
 	if err = s.tmpl.ExecuteTemplate(
 		w, detailTemplate,
 		viewData{
-			Title:    makeTitle("Detail", contact.Name),
+			Title:    makeTitle("Detail", contact.DisplayName()),
 			Contacts: []*Contact{contact},
 			Request:  r,
 		}); err != nil {
