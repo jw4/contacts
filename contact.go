@@ -22,6 +22,11 @@ type Contact struct {
 	Phone      []string  `ldap:"telephoneNumber"`
 	Labels     []string  `ldap:"label"`
 	CommonName string    `ldap:"cn"`
+	Street     []string  `ldap:"street"`
+	City       string    `ldap:"l"`
+	State      string    `ldap:"st"`
+	Zip        string    `ldap:"postalCode"`
+	Country    string    `ldap:"countryCode"`
 }
 
 func (c *Contact) Age() string { return c.AgeOn(time.Now()) }

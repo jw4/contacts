@@ -31,6 +31,36 @@
             <input type=tel name=telephoneNumber placeholder="Telephone Number" /></td>
     </tr>
     <tr>
+        <td>Street</td>
+        <td>{{ range .Street }}
+            <input type=text name=street value="{{ . }}" placeholder="Street" /> {{end}}
+            <input type=text name=street placeholder="Street" /></td>
+    </tr>
+    <tr>
+        <td>City</td>
+        <td>
+            <input type=text name=city value="{{ .City }}" placeholder="City" />
+        </td>
+    </tr>
+    <tr>
+        <td>State</td>
+        <td>
+            <input type=text name=state value="{{ .State }}" placeholder="State" />
+        </td>
+    </tr>
+    <tr>
+        <td>Zip</td>
+        <td>
+            <input type=text name=zip value="{{ .Zip }}" placeholder="Zip/Postal Code" />
+        </td>
+    </tr>
+    <tr>
+        <td>Country</td>
+        <td>
+            <input type=text name=country value="{{ .Country }}" placeholder="Country Code (US, CA, UK, MX, etc.)" />
+        </td>
+    </tr>
+    <tr>
         <td>Birthdate</td>
         <td>
             <input type=number name=birthDay value="{{ .BirthDayOfMonth }}" placeholder="Day" />

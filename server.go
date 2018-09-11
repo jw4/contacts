@@ -88,46 +88,10 @@ func (s *server) handleCreate(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case "POST":
-		s.handleCreatePost(w, r)
+		s.handleSavePost(w, r)
 	default:
 		s.showCreate(w, r)
 	}
-}
-
-func (s *server) handleCreatePost(w http.ResponseWriter, r *http.Request) {
-	switch r.Form.Get("submit") {
-	case "Save":
-		birthday := time.Time{}
-		if month, ok := monthValues[r.Form.Get("birthMonth")]; ok {
-			if day, err := strconv.Atoi(r.Form.Get("birthDay")); err == nil {
-				year, err := strconv.Atoi(r.Form.Get("birthYear"))
-				if err != nil {
-					year = 0
-				}
-				birthday = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-			}
-		}
-		old, err := Single(s.config, r.Form.Get("dn"))
-		if err != nil {
-			old = &Contact{}
-		}
-		if err = Save(s.config, old, &Contact{
-			Name:     r.Form.Get("displayName"),
-			First:    r.Form.Get("given"),
-			Last:     r.Form.Get("sn"),
-			Suffix:   r.Form.Get("generation"),
-			Birthday: birthday,
-			Email:    dedupe(r.Form["mail"]),
-			Phone:    dedupe(r.Form["telephoneNumber"]),
-			Labels:   dedupe(r.Form["label"]),
-		}); err != nil {
-			log.Printf("error creating: %v", err)
-			http.Error(w, "unexpected error", http.StatusInternalServerError)
-			return
-		}
-	default:
-	}
-	http.Redirect(w, r, s.listLink(nil), http.StatusSeeOther)
 }
 
 func (s *server) showCreate(w http.ResponseWriter, r *http.Request) {
@@ -135,6 +99,58 @@ func (s *server) showCreate(w http.ResponseWriter, r *http.Request) {
 	if err := s.tmpl.ExecuteTemplate(
 		w, createTemplate, viewData{
 			Title:    makeTitle("Create"),
+			Contacts: []*Contact{contact},
+			Request:  r,
+		}); err != nil {
+		log.Fatalf("executing template: %v", err)
+	}
+}
+
+func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseForm(); err != nil {
+		log.Printf("handleEdit: error parsing form: %v", err)
+		http.Error(w, "Bad Input", http.StatusBadRequest)
+		return
+	}
+
+	switch r.Method {
+	case "POST":
+		s.handleSavePost(w, r)
+	default:
+		s.showEdit(w, r)
+	}
+}
+
+func (s *server) handleSavePost(w http.ResponseWriter, r *http.Request) {
+	switch r.Form.Get("submit") {
+	case "Save":
+		old, err := Single(s.config, r.Form.Get("dn"))
+		if err != nil {
+			log.Printf("error getting old %q: %v", r.Form.Get("dn"), err)
+			old = &Contact{}
+		}
+		if err = Save(s.config, old, contactFromForm(r.Form)); err != nil {
+			log.Printf("error saving: %v", err)
+			http.Error(w, "unexpected error", http.StatusInternalServerError)
+			return
+		}
+	default:
+	}
+	http.Redirect(w, r, s.detailLink(r.Form), http.StatusSeeOther)
+}
+
+func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
+	dn := r.Form.Get("dn")
+	contact, err := Single(s.config, dn)
+	if err != nil {
+		log.Printf("finding %q: %v", dn, err)
+		http.NotFound(w, r)
+		return
+	}
+
+	if err = s.tmpl.ExecuteTemplate(
+		w, editTemplate, viewData{
+			Title:    makeTitle("Edit", contact.DisplayName()),
 			Contacts: []*Contact{contact},
 			Request:  r,
 		}); err != nil {
@@ -181,77 +197,6 @@ func (s *server) showDelete(w http.ResponseWriter, r *http.Request) {
 	if err := s.tmpl.ExecuteTemplate(
 		w, deleteTemplate, viewData{
 			Title:    makeTitle("Confirm Delete", contact.DisplayName()),
-			Contacts: []*Contact{contact},
-			Request:  r,
-		}); err != nil {
-		log.Fatalf("executing template: %v", err)
-	}
-}
-
-func (s *server) handleEdit(w http.ResponseWriter, r *http.Request) {
-	if err := r.ParseForm(); err != nil {
-		log.Printf("handleEdit: error parsing form: %v", err)
-		http.Error(w, "Bad Input", http.StatusBadRequest)
-		return
-	}
-
-	switch r.Method {
-	case "POST":
-		s.handleEditPost(w, r)
-	default:
-		s.showEdit(w, r)
-	}
-}
-
-func (s *server) handleEditPost(w http.ResponseWriter, r *http.Request) {
-	switch r.Form.Get("submit") {
-	case "Save":
-		birthday := time.Time{}
-		if month, ok := monthValues[r.Form.Get("birthMonth")]; ok {
-			if day, err := strconv.Atoi(r.Form.Get("birthDay")); err == nil {
-				year, err := strconv.Atoi(r.Form.Get("birthYear"))
-				if err != nil {
-					year = 0
-				}
-				birthday = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
-			}
-		}
-		old, err := Single(s.config, r.Form.Get("dn"))
-		if err != nil {
-			old = &Contact{}
-		}
-		if err = Save(s.config, old, &Contact{
-			ID:       r.Form.Get("dn"),
-			Name:     r.Form.Get("displayName"),
-			First:    r.Form.Get("given"),
-			Last:     r.Form.Get("sn"),
-			Suffix:   r.Form.Get("generation"),
-			Birthday: birthday,
-			Email:    dedupe(r.Form["mail"]),
-			Phone:    dedupe(r.Form["telephoneNumber"]),
-			Labels:   dedupe(r.Form["label"]),
-		}); err != nil {
-			log.Printf("error saving: %v", err)
-			http.Error(w, "unexpected error", http.StatusInternalServerError)
-			return
-		}
-	default:
-	}
-	http.Redirect(w, r, s.detailLink(r.Form), http.StatusSeeOther)
-}
-
-func (s *server) showEdit(w http.ResponseWriter, r *http.Request) {
-	dn := r.Form.Get("dn")
-	contact, err := Single(s.config, dn)
-	if err != nil {
-		log.Printf("finding %q: %v", dn, err)
-		http.NotFound(w, r)
-		return
-	}
-
-	if err = s.tmpl.ExecuteTemplate(
-		w, editTemplate, viewData{
-			Title:    makeTitle("Edit", contact.DisplayName()),
 			Contacts: []*Contact{contact},
 			Request:  r,
 		}); err != nil {
@@ -378,6 +323,34 @@ var (
 	noneFilter   = []string(nil)
 )
 
+func contactFromForm(v url.Values) *Contact {
+	birthday := time.Time{}
+	if month, ok := monthValues[v.Get("birthMonth")]; ok {
+		if day, err := strconv.Atoi(v.Get("birthDay")); err == nil {
+			year, err := strconv.Atoi(v.Get("birthYear"))
+			if err != nil {
+				year = 0
+			}
+			birthday = time.Date(year, month, day, 0, 0, 0, 0, time.UTC)
+		}
+	}
+	return &Contact{
+		ID:       v.Get("dn"),
+		Name:     v.Get("displayName"),
+		First:    v.Get("given"),
+		Last:     v.Get("sn"),
+		Suffix:   v.Get("generation"),
+		Street:   dedupe(v["street"]),
+		City:     v.Get("city"),
+		State:    v.Get("state"),
+		Zip:      v.Get("zip"),
+		Country:  v.Get("country"),
+		Birthday: birthday,
+		Email:    dedupe(v["mail"]),
+		Phone:    dedupe(v["telephoneNumber"]),
+		Labels:   dedupe(v["label"]),
+	}
+}
 func makeTitle(main string, parts ...string) string {
 	return strings.Join(append([]string{main}, parts...), " :: ")
 }

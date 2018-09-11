@@ -2,6 +2,7 @@ package contacts
 
 import (
 	"fmt"
+	"log"
 	"reflect"
 	"time"
 
@@ -33,6 +34,7 @@ func del(config Config, request *ldap.DelRequest) error {
 }
 
 func save(config Config, request *ldap.ModifyRequest) error {
+	log.Printf("save: %+v", request)
 	conn, err := connect(config)
 	if err != nil {
 		return err
@@ -43,6 +45,7 @@ func save(config Config, request *ldap.ModifyRequest) error {
 }
 
 func create(config Config, request *ldap.AddRequest) error {
+	log.Printf("create: %+v", request)
 	conn, err := connect(config)
 	if err != nil {
 		return err

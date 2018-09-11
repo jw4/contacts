@@ -24,6 +24,26 @@
     <tr>
         <td>Phone</td>
         <td>{{ range . }}<span class=phone><a href="tel:{{ . }}">{{ . }}</a></span> {{end}}</td>
+    </tr>{{end}}{{ with .Street }}
+    <tr>
+        <td>Street</td>
+        <td>{{ range . }}<span class=street>{{ . }}</span>{{end}}</td>
+    </tr>{{end}}{{ with .City }}
+    <tr>
+        <td>City</td>
+        <td>{{ . }}</td>
+    </tr>{{end}}{{ with .State }}
+    <tr>
+        <td>State</td>
+        <td>{{ . }}</td>
+    </tr>{{end}}{{ with .Zip }}
+    <tr>
+        <td>Zip</td>
+        <td>{{ . }}</td>
+    </tr>{{end}}{{ with .Country }}
+    <tr>
+        <td>Country</td>
+        <td>{{ . }}</td>
     </tr>{{end}}{{ $age := .Age }}{{ with .BirthDate }}
     <tr>
         <td>Birthdate</td>

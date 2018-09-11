@@ -4,7 +4,13 @@ type ByName []*Contact
 
 func (b ByName) Len() int           { return len(b) }
 func (b ByName) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b ByName) Less(i, j int) bool { return compareName(b[i], b[j]) }
+func (b ByName) Less(i, j int) bool { return compareDisplay(b[i], b[j]) }
+
+type ByLastName []*Contact
+
+func (b ByLastName) Len() int           { return len(b) }
+func (b ByLastName) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b ByLastName) Less(i, j int) bool { return compareName(b[i], b[j]) }
 
 type ByBirthday []*Contact
 

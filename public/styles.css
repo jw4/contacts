@@ -133,6 +133,7 @@ span.label a {
     color: white;
 }
 
+td span.street,
 td span.email,
 td span.phone {
     display: block;
@@ -171,7 +172,7 @@ input[type=submit] {
 
 @page {
     size: letter;
-    margin: 0.5in;
+    margin: 0.25in;
 }
 
 @media print {
@@ -179,11 +180,12 @@ input[type=submit] {
     body {
         width: 8.5in;
         height: 11in;
-        font-size: 14px;
+        font-size: 13px;
     }
 
     caption,
     nav,
+    thead,
     section.labels,
     section.unknown {
         display: none;
