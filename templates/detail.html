@@ -1,38 +1,39 @@
 {{ template "header" $ }}{{ with index $.Contacts 0 }}
 <h1>{{ $.Title }}</h1>
-<table title="ID: {{ .ID }}">
+<table title="ID: {{ .ID }}">{{ with .First }}
     <tr>
         <td>First</td>
-        <td>{{ .First }}</td>
-    </tr>
+        <td>{{ . }}</td>
+    </tr>{{end}}{{ with .Last }}
     <tr>
         <td>Last</td>
-        <td>{{ .Last }}</td>
-    </tr>
+        <td>{{ . }}</td>
+    </tr>{{end}}{{ with .Suffix }}
     <tr>
         <td>Generation/Suffix</td>
-        <td>{{ .Suffix }}</td>
-    </tr>
+        <td>{{ . }}</td>
+    </tr>{{end}}{{ with .DisplayName }}
     <tr>
         <td>Display</td>
-        <td>{{ .DisplayName }}</td>
-    </tr>
+        <td>{{ . }}</td>
+    </tr>{{end}}{{ $name := .DisplayName }}{{ with .Email }}
     <tr>
         <td>Email</td>
-        <td>{{ $name := .DisplayName }}{{ range .Email }}<span class=email><a href='mailto:"{{ $name }}" <{{ . }}>'>{{ . }}</a></span> {{end}}</td>
-    </tr>
+        <td>{{ range . }}<span class=email><a href='mailto:"{{ $name }}" <{{ . }}>'>{{ . }}</a></span> {{end}}</td>
+    </tr>{{end}}{{ with .Phone }}
     <tr>
         <td>Phone</td>
-        <td>{{ range .Phone }}<span class=phone><a href="tel:{{ . }}">{{ . }}</a></span> {{end}}</td>
-    </tr>
+        <td>{{ range . }}<span class=phone><a href="tel:{{ . }}">{{ . }}</a></span> {{end}}</td>
+    </tr>{{end}}{{ $age := .Age }}{{ with .BirthDate }}
     <tr>
         <td>Birthdate</td>
-        <td>{{ .BirthDate }}</td>
-    </tr>
+        <td {{ with $age }}title="{{ . }}" {{end}}>{{ . }}</td>
+    </tr>{{end}}{{ with .Labels }}
     <tr class=labels>
         <td>Labels</td>
-        <td>{{ range .Labels }}<span class=label><a href='{{ birthdaysLink ( makeValues "label" . ) }}'>{{ . }}</a></span> {{end}}</td>
-    </tr>
+        <td>{{ range . }}
+            <span class=label><a href='{{ contactsLink ( makeValues "label" . ) }}'>{{ . }}</a></span> {{end}}</td>
+    </tr>{{end}}
 </table>
 <nav>
     <ul>

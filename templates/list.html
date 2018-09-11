@@ -8,14 +8,20 @@
             <th>Birthday</th>
             <th>Phone</th>
             <th>Email</th>
+            <th></th>
         </tr>
     </thead>
     <tbody>{{ range .Contacts }}
         <tr>
             <td><a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{.DisplayName}}</span></a></td>
-            <td>{{ .BirthDate }}</td>
+            <td {{ with .Age }}title="{{ . }}" {{end}}>{{ .BirthDate }}</td>
             <td>{{ with .Phone }}<a href="tel:{{ index . 0 }}">{{ index . 0 }}</a>{{end}}</td>
             <td>{{ mailtoLink . }}</td>
+            <td><span class="action-links">
+                <a href='{{ editLink ( makeValues "dn" .ID ) }}'>edit</a>
+                <a href='{{ deleteLink ( makeValues "dn" .ID ) }}'>delete</a>
+              </span>
+            </td>
         </tr>{{ end }}
     </tbody>
 </table>

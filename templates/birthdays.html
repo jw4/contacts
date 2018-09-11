@@ -13,11 +13,27 @@
     <tbody class="birthdays {{ . }}">{{range $month, $contact := index $.ByMonth .}}
         <tr>
             <td><span class=day>{{.BirthDayOfMonth}}</span></td>
-            <td> <a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{.DisplayName}}</span></a></td>
+            <td> <a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{ .DisplayName }}</span></a></td>
             <td>{{ $age := .Age }}{{with .BirthDate}}
                 <span class=birthday {{ with $age }}title="{{ . }} old" {{end}}>{{ . }}</span>{{end}}</td>
         </tr> {{end}}
     </tbody>
     {{ end }}{{ end }}
 </table>
-{{ template "footer" $ }}
+{{ with index $.ByMonth "" }}
+<section class=unknown>
+    <h3>Missing Birthdays</h3>
+    <table>
+        <tbody>{{ range . }}
+            <tr>
+                <td>
+                    <a href='{{ detailLink ( makeValues "dn" .ID ) }}'><span class=name>{{ .DisplayName }}</span></a>
+                </td>
+                <td class="action-links">
+                    <a href='{{ editLink ( makeValues "dn" .ID ) }}'>edit</a>
+                    <a href='{{ deleteLink ( makeValues "dn" .ID ) }}'>delete</a>
+                </td>
+            </tr>{{end}}</tbody>
+    </table>
+</section>
+{{end}} {{ template "footer" $ }}
