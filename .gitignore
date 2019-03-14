@@ -3,3 +3,4 @@ birthdays
 server
 contacts
 .env-remote
+vendor/

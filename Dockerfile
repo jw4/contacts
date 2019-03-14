@@ -4,9 +4,9 @@
 
 FROM golang:stretch as builder
 
-COPY . /go/src/jw4.us/contacts
+COPY . /src/contacts
 
-WORKDIR /go/src/jw4.us/contacts
+WORKDIR /src/contacts
 
 ARG BUILD_VERSION=v0.0.0
 
@@ -26,7 +26,7 @@ LABEL maintainer="John Weldon <johnweldon4@gmail.com>" \
       company="John Weldon Consulting" \
       description="Contacts Server"
 
-COPY --from=builder /go/src/jw4.us/contacts/server /server
+COPY --from=builder /src/contacts/server /server
 COPY public /public/
 COPY templates /templates/
 
