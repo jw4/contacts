@@ -165,10 +165,10 @@ func handleLDAPAttributes(c interface{}, fn func(key string, val reflect.Value))
 
 func changes(cur, updates map[string][]string) map[string]map[string][]string {
 	diff := map[string]map[string][]string{
-		"add":     map[string][]string{},
-		"delete":  map[string][]string{},
-		"modify":  map[string][]string{},
-		"replace": map[string][]string{},
+		"add":     {},
+		"delete":  {},
+		"modify":  {},
+		"replace": {},
 	}
 	if reflect.DeepEqual(cur, updates) {
 		return nil

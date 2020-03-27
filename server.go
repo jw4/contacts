@@ -235,7 +235,7 @@ func (s *server) showList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	labels, _ := r.Form["label"]
+	labels := r.Form["label"]
 	records, err := List(s.config, labels)
 	if err != nil {
 		log.Fatal(err)
@@ -260,7 +260,7 @@ func (s *server) showBirthdays(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	labels, _ := r.Form["label"]
+	labels := r.Form["label"]
 	records, err := List(s.config, labels)
 	if err != nil {
 		log.Fatal(err)
@@ -282,8 +282,6 @@ func (s *server) showBirthdays(w http.ResponseWriter, r *http.Request) {
 		log.Fatal(err)
 	}
 }
-
-func (s *server) rootRoute() string { return s.baseRoute }
 
 func (s *server) birthdaysRoute() string { return path.Join(s.baseRoute, birthdaysRoute) }
 func (s *server) createRoute() string    { return path.Join(s.baseRoute, createRoute) }
