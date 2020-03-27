@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	ldap "gopkg.in/ldap.v2"
+	ldap "github.com/go-ldap/ldap/v3"
 )
 
 type Contact struct {
@@ -166,7 +166,7 @@ func buildModifyRequest(original, updated *Contact) *ldap.ModifyRequest {
 		return nil
 	}
 	changes := original.changes(updated)
-	req := ldap.NewModifyRequest(updated.ID)
+	req := ldap.NewModifyRequest(updated.ID, nil)
 	for k, v := range changes["delete"] {
 		req.Delete(k, v)
 	}
@@ -187,7 +187,7 @@ func buildAddRequest(baseDN string, contact *Contact) *ldap.AddRequest {
 		return nil
 	}
 	contact.ID = fmt.Sprintf("cn=%s,ou=contacts,%s", contact.DisplayName(), baseDN)
-	req := ldap.NewAddRequest(contact.ID)
+	req := ldap.NewAddRequest(contact.ID, nil)
 	req.Attribute("objectClass", []string{
 		"contact",
 		"inetOrgPerson",
